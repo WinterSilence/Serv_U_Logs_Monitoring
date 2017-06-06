@@ -1,6 +1,7 @@
 package myProject.model.infoFromFile;
 
 import myProject.Helper;
+import myProject.model.data.Session;
 
 import java.io.*;
 import java.util.*;
@@ -8,8 +9,8 @@ import java.nio.charset.Charset;
 
 public class OpenedFile {
 
-    private Map<String, String> initDataMap = new TreeMap<>();
-    private Map<String, String> newUpdateMap = new TreeMap<>();
+    private Map<String, StringBuilder> initDataMap = new HashMap<>();
+    private Map<String, String> newUpdateMap = new HashMap<>();
 
     private String fullPath = "";
 
@@ -23,12 +24,12 @@ public class OpenedFile {
     public void initDataMap(FileSource fileSource) {
         File currentFile = fileSource.getFile();
         fullPath = currentFile.getAbsolutePath();
-
         while (count != TRY_COUNT) {
             try (FileInputStream fis = new FileInputStream(currentFile);
-                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")));) {
-                while (bufferedReader.ready()) {
-                    String currentLine = bufferedReader.readLine();
+                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")))) {
+                String currentLine;
+
+                while ((currentLine = bufferedReader.readLine()) != null) {
                     checkAndInputStringToInitMap(currentLine);
                     lastLine = currentLine;
                 }
@@ -72,19 +73,25 @@ public class OpenedFile {
                 String id = string.substring(string.indexOf(" - (") + 4, string.indexOf(") "));
                 int checkID = Integer.parseInt(id);
                 if (id.matches("\\d+")) {
-
                     int operationNumber = Integer.parseInt(string.substring(string.indexOf("[") + 1, string.indexOf("] ")));
-                    if (operationNumber != 3 && operationNumber != 6)
-                        if (initDataMap.get(id) != null)
-                            initDataMap.put(id, initDataMap.get(id) + string + "\n");
-                        else initDataMap.put(id, string + "\n");
 
+                    if (operationNumber != 3 && operationNumber != 6) {
+
+                        StringBuilder value = initDataMap.get(id);
+
+                        if (value != null) {
+                            initDataMap.put(id, value.append(string).append("\n"));
+                        } else {
+                            value = new StringBuilder(string);
+                            initDataMap.put(id, value.append("\n"));
+                        }
+                    }
                 }
             } catch (NumberFormatException ex) {
                 Helper.log(ex);
                 System.out.println("OpenedFile.java + checkAndInputStringToInitMap");
             } catch (StringIndexOutOfBoundsException secondEx) {
-//                System.out.println("Skip \n" + string);
+//                System.out.println("Skip \n" + string + " - secondEx");
 //                Helper.log(secondEx);
 //   Пропускаем строку типа:   Event: FILE_UPLOAD (File upload OK Event - EMAIL); Type: EMAIL; To: info_arrive_ftp@vgtrk.com; smena-ogs@vgtrk.com
             }
@@ -128,7 +135,11 @@ public class OpenedFile {
     }
 
     public Map<String, String> getInitDataMap() {
-        return initDataMap;
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, StringBuilder> pair : initDataMap.entrySet()) {
+            result.put(pair.getKey(),pair.getValue().toString());
+        }
+        return result;
     }
 
     public Map<String, String> getNewUpdateMap() {

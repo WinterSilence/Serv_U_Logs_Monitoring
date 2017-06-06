@@ -7,13 +7,31 @@ import java.util.Date;
 public class ShareSource implements FileSource {
 
     private String folder = "\\\\ftpres\\f$\\Serv-U.log\\";
+
+    private SimpleDateFormat filenameDateFormat = new SimpleDateFormat("yyyy_MM_dd");
+    private String currentDateFilename = filenameDateFormat.format(new Date()) + ".log";
     // Default value
-    private String fullPath = folder + new SimpleDateFormat("yyyy_MM_dd").format(new Date()) + ".log";
+    private String fullPathCurrentDate = folder + currentDateFilename;
 
     @Override
     public File getFile() {
-//        fullPath = new SimpleDateFormat("yyyy_MM_dd").format(new Date()) + ".log";
-        return new File(fullPath);
+        return new File(fullPathCurrentDate);
     }
 
+    public static void main(String[] args) {
+        ShareSource shareSource = new ShareSource();
+        File folder = new File(shareSource.folder);
+
+/*
+        if (folder.exists()) {
+            for (File file : folder.listFiles()) {
+                System.out.println(file);
+            }
+        }
+*/
+
+        File[] filesInFolder = folder.listFiles();
+
+
+    }
 }

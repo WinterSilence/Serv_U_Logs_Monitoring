@@ -611,11 +611,12 @@ public class WindowView implements View {
         MenuItem inDalet = new MenuItem("в Dalet основной");
         MenuItem inDaletFFAStrans = new MenuItem("в Dalet FFAStrans");
         MenuItem inDaletReserv = new MenuItem("в Dalet через резерв");
-        MenuItem quantelnaPryamkiPC1 = new MenuItem("в Quantel на PC1");
-        MenuItem quantelnaPryamkiPC2 = new MenuItem("в Quantel на PC2");
+        MenuItem quantelNaPryamkiPC1 = new MenuItem("в Quantel на PC1");
+        MenuItem quantelNaPryamkiPC2 = new MenuItem("в Quantel на PC2");
+        MenuItem copyToCulture = new MenuItem("В ТК Культура");
 
         contextMenu.getItems().addAll(inQuantel, inDalet, inDaletFFAStrans, inDaletReserv, openFolder,
-                quantelnaPryamkiPC1, quantelnaPryamkiPC2);
+                quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToCulture);
         tableCell.setContextMenu(contextMenu);
         Task task = (Task) tableCell.getTableRow().getItem();
         if (task != null) {
@@ -656,7 +657,7 @@ public class WindowView implements View {
                 fireCopyFile(fileFrom, fileTo, "Dalet Резерв");
             });
 
-            quantelnaPryamkiPC1.setOnAction(event1 -> {
+            quantelNaPryamkiPC1.setOnAction(event1 -> {
                 String PC1Address = "\\\\172.18.0.184\\d$\\";
                 String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
                 File currDateFolder = new File(PC1Address + currDateFolderPath);
@@ -675,7 +676,7 @@ public class WindowView implements View {
 
             });
 
-            quantelnaPryamkiPC2.setOnAction(event1 -> {
+            quantelNaPryamkiPC2.setOnAction(event1 -> {
                 String PC2Address = "\\\\172.18.0.183\\d$\\";
                 String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
                 File currDateFolder = new File(PC2Address + currDateFolderPath);
@@ -691,6 +692,12 @@ public class WindowView implements View {
                         + task.getFilename());
                 System.out.println(fileTo);
                 fireCopyFile(fileFrom, fileTo, "на PC2");
+            });
+
+            inQuantel.setOnAction(event1 -> {
+                String cultureFolderPath = "\\\\ftpres\\culture$\\";
+                File fileTo = new File(cultureFolderPath + Helper.renameFromCirrilic(task.getFilename()));
+                fireCopyFile(fileFrom, fileTo, "Культуру");
             });
         }
     }
@@ -722,15 +729,15 @@ public class WindowView implements View {
                     alert.setGraphic(null);
                     alert.setContentText("Файл " + fileTo.getName() + " скопирован в " + text);
                     alert.initModality(Modality.NONE);
-                    Timeline idlestage = new Timeline(new KeyFrame(Duration.seconds(10), new EventHandler<ActionEvent>() {
+                    Timeline idleStage = new Timeline(new KeyFrame(Duration.seconds(10), new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent event) {
                             alert.setResult(ButtonType.CANCEL);
                             alert.hide();
                         }
                     }));
-                    idlestage.setCycleCount(1);
-                    idlestage.play();
+                    idleStage.setCycleCount(1);
+                    idleStage.play();
                     alert.showAndWait();
                 }
             }

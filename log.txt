@@ -1,3 +1,8 @@
 BEFORE
 java.net.ConnectException: Connection timed out: connect
 BEFORE
+java.io.FileNotFoundException: \\ftpres\f$\Serv-U.log\2017_06_06.log (Процесс не может получить доступ к файлу, так как этот файл занят другим процессом)
+java.io.FileNotFoundException: \\ftpres\f$\Serv-U.log\2017_06_06.log.log (Не удается найти указанный файл)
+java.io.FileNotFoundException: \\ftpres\f$\Serv-U.log\2017_06_06.log.log (Не удается найти указанный файл)
+java.io.FileNotFoundException: \\ftpres\f$\Serv-U.log\2017_06_06.log.log (Не удается найти указанный файл)
+BEFORE
