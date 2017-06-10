@@ -15,7 +15,7 @@ public class ShareSource implements FileSource {
 
     @Override
     public File getFile() {
-        System.out.println();
+        System.out.println("tada");
         return new File(fullPathCurrentDate);
     }
 
