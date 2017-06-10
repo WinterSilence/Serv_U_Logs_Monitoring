@@ -7,6 +7,7 @@ import myProject.model.data.UploadState;
 import myProject.model.infoFromFile.FileSource;
 import myProject.model.infoFromFile.OpenedFile;
 
+import java.io.FileNotFoundException;
 import java.util.*;
 
 public class MyModel {
@@ -83,7 +84,7 @@ public class MyModel {
         while (iterator.hasNext()) {
             Map.Entry<String, Session> pair = (Map.Entry<String, Session>) iterator.next();
             Session value = pair.getValue();                              // Session
-            if (bannedLogins.contains(value.getLogin().toLowerCase())){
+            if (bannedLogins.contains(value.getLogin().toLowerCase())) {
                 iterator.remove();
             }
         }

@@ -2,7 +2,10 @@ package myProject.model.infoFromFile;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 public class ShareSource implements FileSource {
 
@@ -14,14 +17,22 @@ public class ShareSource implements FileSource {
     private String fullPathCurrentDate = folder + currentDateFilename;
 
     @Override
-    public File getFile() {
-        System.out.println("tada");
-        return new File(fullPathCurrentDate);
+    public List<File> getFiles() {
+        File[] files = new File(folder).listFiles();
+        List<File> result = new ArrayList<>();
+        if (files != null) {
+            for (File file : files) {
+                if (file.getName().matches("\\d{4}_\\d{2}_\\d{2}\\.log")) {
+                    result.add(file);
+                }
+            }
+            Collections.reverse(result);
+        }
+        return result;
     }
 
     public static void main(String[] args) {
         ShareSource shareSource = new ShareSource();
-        File folder = new File(shareSource.folder);
 
 /*
         if (folder.exists()) {
@@ -31,8 +42,9 @@ public class ShareSource implements FileSource {
         }
 */
 
-        File[] filesInFolder = folder.listFiles();
-
+        for (File file : shareSource.getFiles()) {
+            System.out.println(file.getName());
+        }
 
     }
 }

@@ -5,6 +5,8 @@ import myProject.model.MyModel;
 import myProject.model.infoFromFile.FileSource;
 import myProject.view.WindowView;
 
+import java.io.FileNotFoundException;
+
 public class FXMLController implements Controller {
 
     private MyModel myModel;
@@ -52,7 +54,7 @@ public class FXMLController implements Controller {
         return myModel.isOffline();
     }
 
-    public void reset(){
+    public void reset() {
         myModel.setOffline();
     }
 }

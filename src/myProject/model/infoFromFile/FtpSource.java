@@ -12,6 +12,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class FtpSource implements FileSource {
 
@@ -25,8 +26,6 @@ public class FtpSource implements FileSource {
     private File fileCopy = null;
     private File ftpFile = null;
 
-    //    private boolean copyExists = false;
-    private boolean error = false;
     private BooleanProperty copyExists = new SimpleBooleanProperty(false);
 
     private FTPClient ftpClient;
@@ -37,7 +36,6 @@ public class FtpSource implements FileSource {
             ftpFile = Files.createTempFile("", "").toFile();
             System.out.println(ftpFile.getAbsolutePath());
             System.out.println(fileCopy.getAbsolutePath());
-            Helper.writeLog("BEFORE");
             try {
                 ftpClient = new FTPClient();
             }catch (Throwable thr) {
@@ -49,8 +47,10 @@ public class FtpSource implements FileSource {
     }
 
     @Override
-    public File getFile() {
-        return fileCopy;
+    public List<File> getFiles() {
+
+//        return fileCopy;
+        return null;
     }
 
     public void setFtpAddress(String ftpAddress) {
@@ -71,14 +71,6 @@ public class FtpSource implements FileSource {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-/*    public boolean isCopyExists() {
-        return copyExists;
-    }*/
-
-    public boolean isError() {
-        return error;
     }
 
     public boolean connectToFtp() {
@@ -119,7 +111,6 @@ public class FtpSource implements FileSource {
                 return false;
             }
         } catch (IOException ex) {
-            error = true;
             System.out.println("IO Exception");
             Helper.log(ex);
         }
@@ -143,14 +134,12 @@ public class FtpSource implements FileSource {
                         if (success) {
                             System.out.println("File " + filename + " has been downloaded successfully.");
                             System.out.println("Making copy!");
-//                            copyExists = ;
                             copyExists.set(Helper.transferFile(ftpFile, fileCopy));
                             System.out.println("Copy done!");
                         }
                         Helper.pause(10);
                     }
                 } catch (IOException ex) {
-                    error = true;
                     System.out.println("IO Exception");
                     Helper.log(ex);
                 }

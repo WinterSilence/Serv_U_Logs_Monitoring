@@ -1,5 +1,6 @@
 package myProject.model.infoFromFile;
 
+import javafx.application.Platform;
 import myProject.Helper;
 import myProject.model.data.Session;
 
@@ -9,8 +10,9 @@ import java.nio.charset.Charset;
 
 public class OpenedFile {
 
-    private Map<String, StringBuilder> initDataMap = new HashMap<>();
-    private Map<String, String> newUpdateMap = new HashMap<>();
+    private Map<String, StringBuilder> initDataMap;
+    private Map<String, StringBuilder> yesterdayDataMap;
+    private Map<String, StringBuilder> newUpdateMap = new HashMap<>();
 
     private String fullPath = "";
 
@@ -22,27 +24,60 @@ public class OpenedFile {
     private final int TRY_COUNT = 5;
 
     public void initDataMap(FileSource fileSource) {
-        File currentFile = fileSource.getFile();
-        fullPath = currentFile.getAbsolutePath();
-        while (count != TRY_COUNT) {
-            try (FileInputStream fis = new FileInputStream(currentFile);
+
+        initDataMap = new HashMap<>();
+        yesterdayDataMap = new HashMap<>();
+        List<File> allFiles = fileSource.getFiles();
+        File yesterdayFile = allFiles.get(1);
+        if (yesterdayFile != null) {
+            try (FileInputStream fis = new FileInputStream(yesterdayFile);
                  BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")))) {
                 String currentLine;
 
                 while ((currentLine = bufferedReader.readLine()) != null) {
-                    checkAndInputStringToInitMap(currentLine);
-                    lastLine = currentLine;
+                    checkAndInputStringToMap(currentLine, yesterdayDataMap);
                 }
-                initBytes = currentFile.length() - lastLine.length() - 2; // минус длина строки и перенос строки !!!
-//                System.out.println(initBytes);
-                if (initBytes < 0) initBytes = 0;
-                isOffline = false;
-                return;
             } catch (IOException ex) {
                 System.out.println("Try number " + (count + 1));
                 Helper.log(ex);
                 count++;
                 Helper.pause(5);
+            }
+
+        }
+        System.out.println("Yesterday - " + yesterdayDataMap.size());
+
+        File currentFile = allFiles.get(0);
+        if (currentFile != null) {
+            fullPath = currentFile.getAbsolutePath();
+            while (count != TRY_COUNT) {
+                try (FileInputStream fis = new FileInputStream(currentFile);
+                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")))) {
+                    String currentLine;
+
+                    while ((currentLine = bufferedReader.readLine()) != null) {
+                        checkAndInputStringToMap(currentLine, initDataMap);
+                        lastLine = currentLine;
+                    }
+                    initBytes = currentFile.length() - lastLine.length() - 2; // минус длина строки и перенос строки !!!
+//                System.out.println(initBytes);
+                    if (initBytes < 0) initBytes = 0;
+                    isOffline = false;
+                    System.out.println("Today - " + initDataMap.size());
+                    return;
+                } catch (IOException ex) {
+                    System.out.println("Try number " + (count + 1));
+                    Helper.log(ex);
+                    count++;
+                    Helper.pause(5);
+                }
+            }
+        } else {
+            try {
+                throw new FileNotFoundException();
+            } catch (FileNotFoundException ex) {
+                Helper.log(ex);
+                Platform.exit();
             }
         }
     }
@@ -67,7 +102,7 @@ public class OpenedFile {
         }
     }
 
-    private void checkAndInputStringToInitMap(String string) {
+    private void checkAndInputStringToMap(String string, Map<String, StringBuilder> map) {
         if (string.length() > 35) {
             try {
                 String id = string.substring(string.indexOf(" - (") + 4, string.indexOf(") "));
@@ -80,10 +115,10 @@ public class OpenedFile {
                         StringBuilder value = initDataMap.get(id);
 
                         if (value != null) {
-                            initDataMap.put(id, value.append(string).append("\n"));
+                            map.put(id, value.append(string).append("\n"));
                         } else {
-                            value = new StringBuilder(string);
-                            initDataMap.put(id, value.append("\n"));
+                            value = new StringBuilder(string + "\n");
+                            map.put(id, value);
                         }
                     }
                 }
@@ -105,14 +140,15 @@ public class OpenedFile {
                 int checkID = Integer.parseInt(id);
                 if (id.matches("\\d+")) {
                     int operationNumber = Integer.parseInt(string.substring(string.indexOf("[") + 1, string.indexOf("] ")));
-                    if (operationNumber != 3 && operationNumber != 6) {// && operationNumber != 20) {
+
+                    if (operationNumber != 3 && operationNumber != 6) {
                         if (newUpdateMap.get(id) != null)
-                            newUpdateMap.put(id, newUpdateMap.get(id) + string + "\n");
+                            newUpdateMap.put(id, newUpdateMap.get(id).append(string).append("\n"));
                         else {
                             if (initDataMap.get(id) != null) {
-                                newUpdateMap.put(id, initDataMap.get(id) + string + "\n");
+                                newUpdateMap.put(id, initDataMap.get(id).append(string).append("\n"));
                             } else {
-                                newUpdateMap.put(id, string + "\n");
+                                newUpdateMap.put(id, new StringBuilder(string + "\n"));
                             }
                         }
                     }
@@ -137,13 +173,17 @@ public class OpenedFile {
     public Map<String, String> getInitDataMap() {
         Map<String, String> result = new HashMap<>();
         for (Map.Entry<String, StringBuilder> pair : initDataMap.entrySet()) {
-            result.put(pair.getKey(),pair.getValue().toString());
+            result.put(pair.getKey(), pair.getValue().toString());
         }
         return result;
     }
 
     public Map<String, String> getNewUpdateMap() {
-        return newUpdateMap;
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, StringBuilder> pair : newUpdateMap.entrySet()) {
+            result.put(pair.getKey(), pair.getValue().toString());
+        }
+        return result;
     }
 
     public boolean isOffline() {

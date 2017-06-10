@@ -69,7 +69,7 @@ public class WindowView implements View {
     private MyModel myModel;
 
     private Parent root;
-    private String title = "WorkProjectApp 20170606";
+    private String title = "WorkProjectApp 20170610";
     private TableView<Session> tableViewOnline; // Online Sessions
     private TableView<Task> tableViewRecently;  // Recently uploaded files
     private TableView<Task> tableViewUploading; // Uploading files
@@ -694,7 +694,7 @@ public class WindowView implements View {
                 fireCopyFile(fileFrom, fileTo, "на PC2");
             });
 
-            inQuantel.setOnAction(event1 -> {
+            copyToCulture.setOnAction(event1 -> {
                 String cultureFolderPath = "\\\\ftpres\\culture$\\";
                 File fileTo = new File(cultureFolderPath + Helper.renameFromCirrilic(task.getFilename()));
                 fireCopyFile(fileFrom, fileTo, "Культуру");
