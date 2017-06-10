@@ -15,6 +15,7 @@ public class ShareSource implements FileSource {
 
     @Override
     public File getFile() {
+        System.out.println();
         return new File(fullPathCurrentDate);
     }
 
