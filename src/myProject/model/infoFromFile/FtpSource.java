@@ -34,8 +34,8 @@ public class FtpSource implements FileSource {
         try {
             fileCopy = Files.createTempFile("", "").toFile();
             ftpFile = Files.createTempFile("", "").toFile();
-            System.out.println(ftpFile.getAbsolutePath());
-            System.out.println(fileCopy.getAbsolutePath());
+            Helper.print(ftpFile.getAbsolutePath());
+            Helper.print(fileCopy.getAbsolutePath());
             try {
                 ftpClient = new FTPClient();
             }catch (Throwable thr) {
@@ -82,7 +82,7 @@ public class FtpSource implements FileSource {
             int reply;
             ftpClient.connect(ftpAddress);
 
-            System.out.println("Connected to ftp.vgtrk.com on " + 21);
+            Helper.print("Connected to ftp.vgtrk.com on " + 21);
 
             reply = ftpClient.getReplyCode();
             if (!FTPReply.isPositiveCompletion(reply)) {
@@ -104,14 +104,14 @@ public class FtpSource implements FileSource {
     }
 
     public boolean loginOk() {
-        System.out.println("trying login and password");
+        Helper.print("trying login and password");
         try {
             if (!ftpClient.login(username, password)) {
                 ftpClient.logout();
                 return false;
             }
         } catch (IOException ex) {
-            System.out.println("IO Exception");
+            Helper.print("IO Exception");
             Helper.log(ex);
         }
         return true;
@@ -132,15 +132,15 @@ public class FtpSource implements FileSource {
                         output.close();
 
                         if (success) {
-                            System.out.println("File " + filename + " has been downloaded successfully.");
-                            System.out.println("Making copy!");
+                            Helper.print("File " + filename + " has been downloaded successfully.");
+                            Helper.print("Making copy!");
                             copyExists.set(Helper.transferFile(ftpFile, fileCopy));
-                            System.out.println("Copy done!");
+                            Helper.print("Copy done!");
                         }
                         Helper.pause(10);
                     }
                 } catch (IOException ex) {
-                    System.out.println("IO Exception");
+                    Helper.print("IO Exception");
                     Helper.log(ex);
                 }
             }

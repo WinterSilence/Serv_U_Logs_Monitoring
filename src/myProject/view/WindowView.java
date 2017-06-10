@@ -265,33 +265,33 @@ public class WindowView implements View {
                             ftpSource.start();
 
                             ftpSource.copyExistsProperty().addListener((observable, oldValue, newValue) -> {
-                                System.out.println("CopyExist");
-                                System.out.println("Start connection");
+                                Helper.print("CopyExist");
+                                Helper.print("Start connection");
                                 fxmlController.establishConnection(ftpSource);
                                 FTPButton.setDisable(true);
                             });
 
 /*
                             if (ftpSource.isCopyExists()) {
-                                System.out.println("Copy Exist!");
+                                Helper.print("Copy Exist!");
                                 if (fxmlController.isOffline()) {
-                                    System.out.println("Start connection!");
+                                    Helper.print("Start connection!");
                                     fxmlController.establishConnection(ftpSource);
                                     FTPButton.setDisable(true);
                                 } else {
-                                    System.out.println("End connection!");
+                                    Helper.print("End connection!");
                                     fxmlController.closeConnection();
                                     FTPButton.setDisable(false);
                                 }
                             } else {
-                                System.out.println("Copy Not Exist!");
+                                Helper.print("Copy Not Exist!");
                             }
 */
                             break;
                         } else
 
                         {
-                            System.out.println("LOGIN FAIL");
+                            Helper.print("LOGIN FAIL");
                         }
                     }
                 }
@@ -534,7 +534,7 @@ public class WindowView implements View {
         tableViewRecently.setOnMousePressed(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent event) {
                 if (event.isSecondaryButtonDown()) {
-                    System.out.println("Right Clicked");
+                    Helper.print("Right Clicked");
 
                     EventTarget eventTarget = event.getTarget();
                     TableCell tableCell = null;
@@ -671,7 +671,7 @@ public class WindowView implements View {
 
                 File fileTo = new File(currDateFolder.getAbsolutePath() + File.separator
                         + task.getFilename());
-                System.out.println(fileTo);
+                Helper.print(fileTo);
                 fireCopyFile(fileFrom, fileTo, "на PC1");
 
             });
@@ -690,7 +690,7 @@ public class WindowView implements View {
 
                 File fileTo = new File(currDateFolder.getAbsolutePath() + File.separator
                         + task.getFilename());
-                System.out.println(fileTo);
+                Helper.print(fileTo);
                 fireCopyFile(fileFrom, fileTo, "на PC2");
             });
 

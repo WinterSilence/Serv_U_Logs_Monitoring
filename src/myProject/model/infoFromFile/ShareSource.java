@@ -1,5 +1,7 @@
 package myProject.model.infoFromFile;
 
+import myProject.Helper;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -37,13 +39,13 @@ public class ShareSource implements FileSource {
 /*
         if (folder.exists()) {
             for (File file : folder.listFiles()) {
-                System.out.println(file);
+                Helper.print(file);
             }
         }
 */
 
         for (File file : shareSource.getFiles()) {
-            System.out.println(file.getName());
+            Helper.print(file.getName());
         }
 
     }

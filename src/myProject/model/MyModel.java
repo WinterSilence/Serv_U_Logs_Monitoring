@@ -68,7 +68,7 @@ public class MyModel {
 
             allSessionsMap.put(pair.getKey(), session);
         }
-        System.out.println(allSessionsMap.size());
+        Helper.print(allSessionsMap.size());
         removeBannedSessions();
         getTasksUpdate();
     }
@@ -93,7 +93,10 @@ public class MyModel {
     private void getDataUpdates() {
         openedFile.update();
 
-        System.out.println(openedFile.getNewUpdateMap().size() + " updated sessions");
+        List<String> list = new ArrayList<>();
+        Map<String, String> map = openedFile.getNewUpdateMap();
+        list.addAll(map.keySet());
+        Helper.print(map.size() + " updated sessions - " + list);
 
 
         Iterator iterator = openedFile.getNewUpdateMap().entrySet().iterator();
@@ -119,9 +122,9 @@ public class MyModel {
 
         for (Session session : allSessionsMap.values()) {
             if (session.getLogin().equals(Helper.EMPTY_LOGIN_FIELD)) {
-                System.out.println(session.getIDSession() + " --- ");
-                System.out.println(session.getData());
-                System.out.println("*******************************");
+                Helper.print(session.getIDSession() + " --- ");
+                Helper.print(session.getData());
+                Helper.print("*******************************");
             }
         }
     }

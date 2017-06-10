@@ -2,7 +2,6 @@ package myProject.model.infoFromFile;
 
 import javafx.application.Platform;
 import myProject.Helper;
-import myProject.model.data.Session;
 
 import java.io.*;
 import java.util.*;
@@ -38,14 +37,14 @@ public class OpenedFile {
                     checkAndInputStringToMap(currentLine, yesterdayDataMap);
                 }
             } catch (IOException ex) {
-                System.out.println("Try number " + (count + 1));
+                Helper.print("Try number " + (count + 1));
                 Helper.log(ex);
                 count++;
                 Helper.pause(5);
             }
 
         }
-        System.out.println("Yesterday - " + yesterdayDataMap.size());
+        Helper.print("Yesterday - " + yesterdayDataMap.size());
 
         File currentFile = allFiles.get(0);
         if (currentFile != null) {
@@ -60,13 +59,13 @@ public class OpenedFile {
                         lastLine = currentLine;
                     }
                     initBytes = currentFile.length() - lastLine.length() - 2; // минус длина строки и перенос строки !!!
-//                System.out.println(initBytes);
+//                Helper.print(initBytes);
                     if (initBytes < 0) initBytes = 0;
                     isOffline = false;
-                    System.out.println("Today - " + initDataMap.size());
+                    Helper.print("Today - " + initDataMap.size());
                     return;
                 } catch (IOException ex) {
-                    System.out.println("Try number " + (count + 1));
+                    Helper.print("Try number " + (count + 1));
                     Helper.log(ex);
                     count++;
                     Helper.pause(5);
@@ -124,9 +123,9 @@ public class OpenedFile {
                 }
             } catch (NumberFormatException ex) {
                 Helper.log(ex);
-                System.out.println("OpenedFile.java + checkAndInputStringToInitMap");
+                Helper.print("OpenedFile.java + checkAndInputStringToInitMap");
             } catch (StringIndexOutOfBoundsException secondEx) {
-//                System.out.println("Skip \n" + string + " - secondEx");
+//                Helper.print("Skip \n" + string + " - secondEx");
 //                Helper.log(secondEx);
 //   Пропускаем строку типа:   Event: FILE_UPLOAD (File upload OK Event - EMAIL); Type: EMAIL; To: info_arrive_ftp@vgtrk.com; smena-ogs@vgtrk.com
             }
@@ -154,12 +153,12 @@ public class OpenedFile {
                     }
                 }
             } catch (NumberFormatException ex) {
-                System.out.println("OpenedFile.java + checkAndInputStringToUpdateMap");
-                System.out.println(string);
+                Helper.print("OpenedFile.java + checkAndInputStringToUpdateMap");
+                Helper.print(string);
                 Helper.log(ex);
             } catch (StringIndexOutOfBoundsException secondEx) {
-                System.out.println("Skip \n" + string);
-                System.out.println(secondEx.toString());
+                Helper.print("Skip \n" + string);
+                Helper.print(secondEx.toString());
             }
         }
     }

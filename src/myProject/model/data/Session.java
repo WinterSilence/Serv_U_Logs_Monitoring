@@ -129,8 +129,8 @@ public class Session {
             task.startUpload(data);
             task.endUpload(data);
             tasks.add(task);
-            System.out.println(task);
-            System.out.println("Check found: " + login + " - " + IDSession + " - " + "task: " + task.getFilename() +
+            Helper.print(task);
+            Helper.print("Check found: " + login + " - " + IDSession + " - " + "task: " + task.getFilename() +
                     " - tasks.size: " + tasks.size());
         }
     }

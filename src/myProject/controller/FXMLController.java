@@ -24,7 +24,7 @@ public class FXMLController implements Controller {
         Thread updateThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                System.out.println("Establish connection");
+                Helper.print("Establish connection");
                 myModel.init(fileSource);
                 view.update();
 
@@ -33,7 +33,7 @@ public class FXMLController implements Controller {
                     view.update();
                     Helper.pause(5);
                 }
-                System.out.println("Disconnected");
+                Helper.print("Disconnected");
             }
         });
 
@@ -43,7 +43,7 @@ public class FXMLController implements Controller {
 
     public void closeConnection() {
         myModel.setOffline();
-        System.out.println("Connection stopped");
+        Helper.print("Connection stopped");
     }
 
     public void setFullPath(String fullPath) {

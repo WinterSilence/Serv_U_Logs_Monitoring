@@ -4,9 +4,22 @@ import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Helper {
     private static final char[][] charTable = new char[65536][];
+    private static File folder = new File("log");
+
+    static {
+        if (!folder.exists() || !folder.isDirectory()) {
+            try {
+                Files.createDirectories(folder.toPath());
+            } catch (IOException ex) {
+                log(ex);
+            }
+        }
+    }
 
     static {
         charTable['А'] = "A".toCharArray();
@@ -116,12 +129,30 @@ public class Helper {
 
     public static void writeLog(String string) {
         try {
-            File file = new File("log.txt");
+            File file = new File(folder + File.separator + "log.txt");
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, true));
             bufferedWriter.write(string + "\r\n");
             bufferedWriter.close();
         } catch (IOException ex) {
         }
     }
+
+    public static void print(Object object) {
+        writeToFileFromConsole(object);
+        System.out.println(object);
+    }
+
+    private static void writeToFileFromConsole(Object object) {
+        String filename = new SimpleDateFormat("yyyy_MM_dd_HH").format(new Date());
+
+        try {
+            File file = new File(folder + File.separator + "console_" + filename + ".txt");
+            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, true));
+            bufferedWriter.write(object + " - " + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "\r\n");
+            bufferedWriter.close();
+        } catch (IOException ex) {
+        }
+    }
+
 }
 
