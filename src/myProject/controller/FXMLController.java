@@ -5,8 +5,6 @@ import myProject.model.MyModel;
 import myProject.model.infoFromFile.FileSource;
 import myProject.view.WindowView;
 
-import java.io.FileNotFoundException;
-
 public class FXMLController implements Controller {
 
     private MyModel myModel;

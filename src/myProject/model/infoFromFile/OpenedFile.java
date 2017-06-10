@@ -169,20 +169,12 @@ public class OpenedFile {
         this.fullPath = fullPath;
     }
 
-    public Map<String, String> getInitDataMap() {
-        Map<String, String> result = new HashMap<>();
-        for (Map.Entry<String, StringBuilder> pair : initDataMap.entrySet()) {
-            result.put(pair.getKey(), pair.getValue().toString());
-        }
-        return result;
+    public Map<String, StringBuilder> getInitDataMap() {
+        return initDataMap;
     }
 
-    public Map<String, String> getNewUpdateMap() {
-        Map<String, String> result = new HashMap<>();
-        for (Map.Entry<String, StringBuilder> pair : newUpdateMap.entrySet()) {
-            result.put(pair.getKey(), pair.getValue().toString());
-        }
-        return result;
+    public Map<String, StringBuilder> getNewUpdateMap() {
+        return newUpdateMap;
     }
 
     public boolean isOffline() {

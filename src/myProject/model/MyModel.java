@@ -7,7 +7,6 @@ import myProject.model.data.UploadState;
 import myProject.model.infoFromFile.FileSource;
 import myProject.model.infoFromFile.OpenedFile;
 
-import java.io.FileNotFoundException;
 import java.util.*;
 
 public class MyModel {
@@ -61,14 +60,26 @@ public class MyModel {
 
     public void init(FileSource fileSource) {
         openedFile.initDataMap(fileSource);
-        for (Map.Entry<String, String> pair : openedFile.getInitDataMap().entrySet()) {
-            Session session = new Session(pair.getKey(), pair.getValue());
 
-            if (session.isOffline() && session.isEmpty()) continue;
+        Iterator<Map.Entry<String, StringBuilder>> iterator = openedFile.getInitDataMap().entrySet().iterator();
+//        for (Map.Entry<String, StringBuilder> pair : openedFile.getInitDataMap().entrySet()) {
+        while (iterator.hasNext()) {
 
-            allSessionsMap.put(pair.getKey(), session);
+            Map.Entry<String, StringBuilder> pair = iterator.next();
+            String key = pair.getKey();                                      // ID Session
+            StringBuilder value = pair.getValue();                           // Data может быть неполной (не сначала)
+
+            Session session = new Session(key, value.toString());
+
+            if (session.isOffline() && session.isEmpty()) {
+                iterator.remove();
+                continue;
+            }
+
+            allSessionsMap.put(key, session);
         }
-        Helper.print(allSessionsMap.size());
+
+//        Helper.print(allSessionsMap.size());
         removeBannedSessions();
         getTasksUpdate();
     }
@@ -80,9 +91,9 @@ public class MyModel {
     }
 
     private void removeBannedSessions() {
-        Iterator iterator = allSessionsMap.entrySet().iterator();
+        Iterator<Map.Entry<String, Session>> iterator = allSessionsMap.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<String, Session> pair = (Map.Entry<String, Session>) iterator.next();
+            Map.Entry<String, Session> pair = iterator.next();
             Session value = pair.getValue();                              // Session
             if (bannedLogins.contains(value.getLogin().toLowerCase())) {
                 iterator.remove();
@@ -94,18 +105,17 @@ public class MyModel {
         openedFile.update();
 
         List<String> list = new ArrayList<>();
-        Map<String, String> map = openedFile.getNewUpdateMap();
+        Map<String, StringBuilder> map = openedFile.getNewUpdateMap();
         list.addAll(map.keySet());
         Helper.print(map.size() + " updated sessions - " + list);
 
-
-        Iterator iterator = openedFile.getNewUpdateMap().entrySet().iterator();
+        Iterator<Map.Entry<String, StringBuilder>> iterator = openedFile.getNewUpdateMap().entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<String, String> pair = (Map.Entry<String, String>) iterator.next();
-            String key = pair.getKey();                                   // ID Session
-            String value = pair.getValue();                               // Data может быть неполной (не сначала)
+            Map.Entry<String, StringBuilder> pair = iterator.next();
+            String key = pair.getKey();                                      // ID Session
+            StringBuilder value = pair.getValue();                           // Data может быть неполной (не сначала)
 
-            Session session = new Session(key, value);
+            Session session = new Session(key, value.toString());
 
             if ((session.isOffline() && session.isEmpty())) {
                 iterator.remove();
