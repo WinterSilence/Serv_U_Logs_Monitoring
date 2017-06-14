@@ -27,9 +27,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
@@ -50,6 +48,7 @@ import myProject.model.infoFromFile.FtpSource;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -74,6 +73,7 @@ public class WindowView implements View {
     private TableView<Task> tableViewUploading; // Uploading files
 
     private SplitPane splitPane;
+    private VBox vBox;
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
     private String selectedLogin = " All";
@@ -97,6 +97,7 @@ public class WindowView implements View {
         root = FXMLLoader.load(getClass().getResource("WorkProjectApplication.fxml"));
         Scene scene = new Scene(root, 1280, 720);
         splitPane = (SplitPane) root.lookup("#splitPane");
+        vBox = (VBox) root.lookup("#VBox");
         stage.setTitle(title);
         stage.setScene(scene);
         stage.show();
@@ -108,6 +109,7 @@ public class WindowView implements View {
         setCheckHoursButton(stage);
         setFTPButton();
         setHideShowSessionTable(stage);
+        setLeftStatusLabel();
     }
 
     private void setHideShowSessionTable(Stage stage) {
@@ -766,5 +768,24 @@ public class WindowView implements View {
 
         uploadingFolderColumn.setCellValueFactory(new PropertyValueFactory<>("folder"));
         uploadingFolderColumn.setStyle("-fx-alignment: CENTER;");
+    }
+
+    private void setLeftStatusLabel() {
+        HBox hBox = (HBox) vBox.lookup("#HBox");
+        Label leftStatusLabel = (Label) hBox.lookup("#leftStatusLabel");
+        System.out.println(leftStatusLabel);
+
+        System.setOut(new PrintStream(System.out) {
+            @Override
+            public void println(Object s) {
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                            leftStatusLabel.setText(s.toString());
+                    }
+                });
+                super.println(s);
+            }
+        });
     }
 }

@@ -137,7 +137,6 @@ public class Helper {
     }
 
     public static void print(Object object) {
-//        writeToFileFromConsole(object);
         System.out.println(object);
     }
 
