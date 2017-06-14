@@ -101,6 +101,11 @@ public class Session {
                 errorUpload(str);
             }
 
+            // Ошибка загрузки при нехватке места (другой синтаксис в логе)
+            if (str.contains(" Sorry, insufficient disk space available - receive file ")) {
+                insufficientSpaceErrorUpload(str);
+            }
+
             if (str.contains(") CLNT ")) {
                 client = str.substring(42);
             }
@@ -140,11 +145,23 @@ public class Session {
             int startIndex = data.indexOf(") Error receiving file \"") + 24;
             File file = new File(data.substring(startIndex, data.indexOf("\"", startIndex)));
             if (task.getFullname().equals(file.getAbsolutePath())) {
-                task.errorUpload();
+                task.setStateErrorUpload();
                 break;
             }
         }
     }
+
+    private void insufficientSpaceErrorUpload(String data) {
+        for (Task task : tasks) {
+            int startIndex = data.indexOf(" Sorry, insufficient disk space available - receive file ") + 57;
+            int endIndex = data.lastIndexOf(" aborted.");
+            File file = new File(data.substring(startIndex, endIndex));
+            if (task.getFilename().equals(file.getName()) && task.getState() != UploadState.ERROR_UPLOAD) {
+                task.setStateErrorUpload();
+            }
+        }
+    }
+
 
     public void setData(String data) {
         this.data = data;

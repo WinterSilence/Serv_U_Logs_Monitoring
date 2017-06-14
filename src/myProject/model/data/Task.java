@@ -55,7 +55,7 @@ public class Task {
         unitFile.setSize(data.substring(data.lastIndexOf(" - ") + 3, data.lastIndexOf(" Bytes") + 6));
     }
 
-    public void errorUpload() {
+    public void setStateErrorUpload() {
         state = UploadState.ERROR_UPLOAD;
     }
 

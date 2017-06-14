@@ -68,7 +68,7 @@ public class WindowView implements View {
     private MyModel myModel;
 
     private Parent root;
-    private String title = "WorkProjectApp 20170610";
+    private String title = "WorkProjectApp 20170614";
     private TableView<Session> tableViewOnline; // Online Sessions
     private TableView<Task> tableViewRecently;  // Recently uploaded files
     private TableView<Task> tableViewUploading; // Uploading files
@@ -425,27 +425,25 @@ public class WindowView implements View {
     private TreeSet<String> recentFilesLogins = new TreeSet<>();
 
     private void setTableViewRecentlyItems() {
-
         List<Task> resultTableRecentlyFiles = filterTaskListHours(myModel.getCompletedTasks());
-        resultTableRecentlyFiles.addAll(myModel.getUncompletedTasks());
 
-        TreeSet<String> recentFilesLoginsUpdate = new TreeSet<>();
+        resultTableRecentlyFiles.addAll(filterTaskListHours(myModel.getUncompletedTasks()));
+
+        TreeSet<String> recentFilesLoginUpdate = new TreeSet<>();
         for (Task task : resultTableRecentlyFiles) {
-            recentFilesLoginsUpdate.add(task.getLogin());
+            recentFilesLoginUpdate.add(task.getLogin());
         }
-        recentFilesLoginsUpdate.add(" All");
+        recentFilesLoginUpdate.add(" All");
 
         if (recentFilesLogins.size() == 0) {
-            recentFilesLogins.addAll(recentFilesLoginsUpdate);
+            recentFilesLogins.addAll(recentFilesLoginUpdate);
             recentlyTaskChoiceBox.setItems(FXCollections.observableArrayList(recentFilesLogins));
         }
 
-        if (!recentFilesLogins.equals(recentFilesLoginsUpdate)) {
-            recentFilesLogins = recentFilesLoginsUpdate;
+        if (!recentFilesLogins.equals(recentFilesLoginUpdate)) {
+            recentFilesLogins = recentFilesLoginUpdate;
             recentlyTaskChoiceBox.setItems(FXCollections.observableArrayList(recentFilesLogins));
         }
-//        TODO по желанию, опционально
-//        if (!recentFilesLogins.contains(selectedLogin)) selectedLogin = " All";
 
         resultTableRecentlyFiles = filterTaskListSelectedChoiceBox(resultTableRecentlyFiles);
 
@@ -471,7 +469,12 @@ public class WindowView implements View {
         Iterator<Task> taskIterator = list.iterator();
         while (taskIterator.hasNext()) {
             Task task = taskIterator.next();
-            long currTime = currentDate.getTime() - task.getTimeEnd().getTime();
+            long currTime = 0;
+            if (task.getTimeEnd() != null) {
+                currTime = currentDate.getTime() - task.getTimeEnd().getTime();
+            } else {
+                currTime = currentDate.getTime() - task.getTimeStart().getTime();
+            }
             if (currTime > checkHours * 3_600_000L) {
                 taskIterator.remove();
             }
@@ -491,7 +494,6 @@ public class WindowView implements View {
 
         onlineConnectionTimeColumn.setCellValueFactory(new PropertyValueFactory<>("time"));
         onlineConnectionTimeColumn.setStyle("-fx-alignment: CENTER;");
-
 
 
         onlineLoginColumn.setCellValueFactory(new PropertyValueFactory<>("login"));

@@ -45,7 +45,10 @@ public class ShareSource implements FileSource {
 */
 
         for (File file : shareSource.getFiles()) {
-            Helper.print(file.getName());
+//            Helper.print(file.getName());
+            if (file.getName().equals(shareSource.currentDateFilename)) {
+                Helper.print("Test");
+            }
         }
 
     }

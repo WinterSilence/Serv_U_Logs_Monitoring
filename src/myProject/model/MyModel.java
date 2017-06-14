@@ -1,5 +1,6 @@
 package myProject.model;
 
+import javafx.application.Platform;
 import myProject.Helper;
 import myProject.model.data.Session;
 import myProject.model.data.Task;
@@ -51,7 +52,16 @@ public class MyModel {
     }
 
     public List<Task> getUncompletedTasks() {
-        return new ArrayList<>(uncompletedTasks);
+        List<Task> result = new ArrayList<>(uncompletedTasks);
+        Collections.sort(result, new Comparator<Task>() {
+            @Override
+            public int compare(Task task1, Task task2) {
+                long task1Time = task1.getTimeStart().getTime();
+                long task2Time = task2.getTimeStart().getTime();
+                return task1Time > task2Time ? -1 : 1;
+            }
+        });
+        return result;
     }
 
     public List<Task> getUploadingTasks() {
@@ -148,13 +158,17 @@ public class MyModel {
             for (Task task : session.getTasks()) {
                 if (task.getState().equals(UploadState.START_UPLOAD) &&
                         allSessionsMap.containsKey(task.getIDSession())) {
-                    if (!allSessionsMap.get(task.getIDSession()).isOffline()) uploadingTasks.add(task);
-                    else {
-                        uncompletedTasks.add(task);
+                    if (!allSessionsMap.get(task.getIDSession()).isOffline()) {
+                        uploadingTasks.add(task);
+                    } else {
+                        task.setStateErrorUpload();
                     }
                 }
                 if (task.getState().equals(UploadState.END_UPLOAD)) {
                     completedTasks.add(task);
+                }
+                if (task.getState().equals(UploadState.ERROR_UPLOAD)) {
+                    uncompletedTasks.add(task);
                 }
             }
         }
