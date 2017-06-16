@@ -26,9 +26,22 @@ public class OpenedFile {
 
         initDataMap = new HashMap<>();
         yesterdayDataMap = new HashMap<>();
-        List<File> allFiles = fileSource.getFiles();
-        File yesterdayFile = allFiles.get(1);
-        if (yesterdayFile != null) {
+        String folder = fileSource.getSourceFolder();
+
+        File[] files = new File(folder).listFiles();
+        List<File> allFiles = new ArrayList<>();
+        if (files != null) {
+            for (File file : files) {
+                System.out.println("check" + file.getName());
+                if (file.getName().matches("\\d{4}_\\d{2}_\\d{2}\\.log")) {
+                    allFiles.add(file);
+                }
+            }
+            Collections.reverse(allFiles);
+        }
+
+        if (allFiles.size() > 1) {
+            File yesterdayFile = allFiles.get(1);
             try (FileInputStream fis = new FileInputStream(yesterdayFile);
                  BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")))) {
                 String currentLine;

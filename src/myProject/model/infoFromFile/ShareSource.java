@@ -1,6 +1,5 @@
 package myProject.model.infoFromFile;
 
-import myProject.Helper;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -19,7 +18,7 @@ public class ShareSource implements FileSource {
     private String fullPathCurrentDate = folder + currentDateFilename;
 
     @Override
-    public List<File> getFiles() {
+    public String getSourceFolder() {
         File[] files = new File(folder).listFiles();
         List<File> result = new ArrayList<>();
         if (files != null) {
@@ -30,7 +29,7 @@ public class ShareSource implements FileSource {
             }
             Collections.reverse(result);
         }
-        return result;
+        return folder;
     }
 
     public static void main(String[] args) {
@@ -43,13 +42,5 @@ public class ShareSource implements FileSource {
             }
         }
 */
-
-        for (File file : shareSource.getFiles()) {
-//            Helper.print(file.getName());
-            if (file.getName().equals(shareSource.currentDateFilename)) {
-                Helper.print("Test");
-            }
-        }
-
     }
 }

@@ -3,16 +3,12 @@ package myProject.model.infoFromFile;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import myProject.Helper;
-import org.apache.commons.net.ftp.FTP;
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPClientConfig;
-import org.apache.commons.net.ftp.FTPReply;
+import org.apache.commons.net.ftp.*;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 public class FtpSource implements FileSource {
 
@@ -20,11 +16,10 @@ public class FtpSource implements FileSource {
     private String username = "";
     private String password = "";
 
-    private String folder = "\\Serv-U.log\\";
-    private String filename = new SimpleDateFormat("yyyy_MM_dd").format(new Date()) + ".log";
-    private String fullPath = folder + filename;
-    private File fileCopy = null;
-    private File ftpFile = null;
+    private String folderTo = "ftp";
+    private String folderFrom = File.separator + "Serv-U.log" + File.separator;
+    private SimpleDateFormat filenameDateFormat = new SimpleDateFormat("yyyy_MM_dd");
+    private String filename = filenameDateFormat.format(new Date()) + ".log";
 
     private BooleanProperty copyExists = new SimpleBooleanProperty(false);
 
@@ -32,13 +27,13 @@ public class FtpSource implements FileSource {
 
     public FtpSource() {
         try {
-            fileCopy = Files.createTempFile("", "").toFile();
-            ftpFile = Files.createTempFile("", "").toFile();
-            Helper.print(ftpFile.getAbsolutePath());
-            Helper.print(fileCopy.getAbsolutePath());
+            File folderToFile = new File(folderTo);
+            if (!folderToFile.exists() || !folderToFile.isDirectory()) {
+                Files.createDirectories(folderToFile.toPath());
+            }
             try {
                 ftpClient = new FTPClient();
-            }catch (Throwable thr) {
+            } catch (Throwable thr) {
                 Helper.writeLog(thr.toString());
             }
         } catch (IOException ex) {
@@ -47,10 +42,8 @@ public class FtpSource implements FileSource {
     }
 
     @Override
-    public List<File> getFiles() {
-
-//        return fileCopy;
-        return null;
+    public String getSourceFolder() {
+        return "ftp";
     }
 
     public void setFtpAddress(String ftpAddress) {
@@ -104,7 +97,7 @@ public class FtpSource implements FileSource {
     }
 
     public boolean loginOk() {
-        Helper.print("trying login and password");
+        Helper.print("Trying login and password");
         try {
             if (!ftpClient.login(username, password)) {
                 ftpClient.logout();
@@ -118,24 +111,58 @@ public class FtpSource implements FileSource {
     }
 
     public void start() {
+        try {
+            ftpClient.enterLocalPassiveMode();
+            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+        } catch (
+                IOException ex)
+
+        {
+            Helper.print("IO Exception");
+            Helper.log(ex);
+        }
 
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     while (true) {
-                        ftpClient.enterLocalPassiveMode();
-                        ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
 
-                        OutputStream output = new FileOutputStream(ftpFile);
-                        boolean success = ftpClient.retrieveFile(fullPath, output);
-                        output.close();
+                        // TODO Может пригодиться
+                        for (FTPFile ftpfile : ftpClient.listFiles(folderFrom, new FTPFileFilter() {
+                            @Override
+                            public boolean accept(FTPFile file) {
+                                return file.getName().matches("\\d{4}_\\d{2}_\\d{2}\\.log");
+                            }
+                        })) {
+                        }
 
+/*                        File fileFromFTP = new File(folderTo + File.separator + "copy" + filename);
+                        if (!fileFromFTP.exists()) {
+                            fileFromFTP = Files.createFile(fileFromFTP.toPath()).toFile();
+                        }
+                        fileFromFTP.deleteOnExit();*/
+
+                        File fileFromFTP = createLocalFile("copy" + filename);
+
+/*                        OutputStream outputStream = new FileOutputStream(fileFromFTP);    // file for update
+                        boolean success = ftpClient.retrieveFile(folderFrom + File.separator + filename, outputStream);
+                        outputStream.close();*/
+
+                        boolean success = downloadFromFTP(fileFromFTP, folderFrom + File.separator + filename);
+
+                        //TODO
                         if (success) {
+//                            makingCopy();
+
+
                             Helper.print("File " + filename + " has been downloaded successfully.");
                             Helper.print("Making copy!");
-                            copyExists.set(Helper.transferFile(ftpFile, fileCopy));
+                            File fileCopy = new File(folderTo + File.separator + filename);
+                            fileCopy.deleteOnExit();
+                            copyExists.set(Helper.transferFile(fileFromFTP, fileCopy));
                             Helper.print("Copy done!");
+
                         }
                         Helper.pause(10);
                     }
@@ -147,5 +174,33 @@ public class FtpSource implements FileSource {
         });
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private File createLocalFile(String filename) throws IOException {
+        File file = new File(folderTo + File.separator + filename);
+        if (!file.exists()) {
+            file = Files.createFile(file.toPath()).toFile();
+        }
+        file.deleteOnExit();
+        return file;
+    }
+
+    private boolean downloadFromFTP(File localFileTo, String pathOnFTPToFile) throws IOException {
+        OutputStream outputStream = new FileOutputStream(localFileTo);    // file for update
+        boolean success = ftpClient.retrieveFile(pathOnFTPToFile, outputStream);
+        outputStream.close();
+        return success;
+    }
+
+
+    //TODO
+    private void makingCopy(String filenameFromFTP) throws IOException {
+        Helper.print("File " + filenameFromFTP + " has been downloaded successfully.");
+        Helper.print("Making copy!");
+//        File fileCopy = new File(folderTo + File.separator + filenameFromFTP);
+        File fileCopy = createLocalFile(filename);
+        fileCopy.deleteOnExit();
+//        copyExists.set(Helper.transferFile(fileFromFTP, fileCopy));
+        Helper.print("Copy done!");
     }
 }

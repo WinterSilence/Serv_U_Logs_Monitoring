@@ -114,6 +114,13 @@ public class Helper {
     }
 
     public static boolean transferFile(File from, File to) {
+        if (!from.exists()) {
+            try {
+                from = Files.createFile(from.toPath()).toFile();
+            }catch (IOException ex){
+                log(ex);
+            }
+        }
         try (FileChannel source = new FileInputStream(from).getChannel();
              FileChannel destination = new FileOutputStream(to).getChannel()) {
             destination.transferFrom(source, 0, source.size());

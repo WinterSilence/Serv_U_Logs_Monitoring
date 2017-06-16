@@ -773,7 +773,6 @@ public class WindowView implements View {
     private void setLeftStatusLabel() {
         HBox hBox = (HBox) vBox.lookup("#HBox");
         Label leftStatusLabel = (Label) hBox.lookup("#leftStatusLabel");
-        System.out.println(leftStatusLabel);
 
         System.setOut(new PrintStream(System.out) {
             @Override
