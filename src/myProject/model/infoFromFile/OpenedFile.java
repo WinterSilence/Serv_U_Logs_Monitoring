@@ -32,7 +32,6 @@ public class OpenedFile {
         List<File> allFiles = new ArrayList<>();
         if (files != null) {
             for (File file : files) {
-                System.out.println("check" + file.getName());
                 if (file.getName().matches("\\d{4}_\\d{2}_\\d{2}\\.log")) {
                     allFiles.add(file);
                 }

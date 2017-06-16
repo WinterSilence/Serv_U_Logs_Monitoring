@@ -264,12 +264,10 @@ public class WindowView implements View {
                     if (ftpSource.connectToFtp()) {
                         if (ftpSource.loginOk()) {
                             ftpSource.start();
-
                             ftpSource.copyExistsProperty().addListener((observable, oldValue, newValue) -> {
                                 Helper.print("CopyExist");
                                 Helper.print("Start connection");
                                 fxmlController.establishConnection(ftpSource);
-                                FTPButton.setDisable(true);
                             });
 
 /*
