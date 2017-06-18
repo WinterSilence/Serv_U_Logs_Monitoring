@@ -46,7 +46,7 @@ public class OpenedFile {
                 String currentLine;
 
                 while ((currentLine = bufferedReader.readLine()) != null) {
-                    checkAndInputStringToMap(currentLine, yesterdayDataMap);
+                    checkAndInputStringToMap(currentLine, initDataMap);
                 }
             } catch (IOException ex) {
                 Helper.print("Try number " + (count + 1));

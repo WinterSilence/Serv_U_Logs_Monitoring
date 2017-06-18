@@ -8,6 +8,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventTarget;
@@ -67,7 +68,7 @@ public class WindowView implements View {
     private MyModel myModel;
 
     private Parent root;
-    private String title = "WorkProjectApp 20170614";
+    private String title = "WorkProjectApp 20170618";
     private TableView<Session> tableViewOnline; // Online Sessions
     private TableView<Task> tableViewRecently;  // Recently uploaded files
     private TableView<Task> tableViewUploading; // Uploading files
@@ -81,8 +82,8 @@ public class WindowView implements View {
     private TableColumn<Task, ?> sortColumn = null;
 
     // Отображение Онлайн сессий и пришедших файлов за checkHours часов
-    // default value = 24
-    private int checkHours = 24;
+    // default value = 48
+    private int checkHours = 48;
 
 
     public WindowView(MyModel myModel) {
@@ -452,6 +453,20 @@ public class WindowView implements View {
         if (sortColumn != null) {
             tableViewRecently.getSortOrder().add(sortColumn);
         }
+        tableViewRecently.sortPolicyProperty().set(new Callback<TableView<Task>, Boolean>() {
+            @Override
+            public Boolean call(TableView<Task> param) {
+                Comparator<Task> comparator = new Comparator<Task>() {
+                    @Override
+                    public int compare(Task task1, Task task2) {
+                        if (task1.getTimeEnd() == null || task2.getTimeEnd() == null) return 0;
+                        return -task1.getTimeEnd().compareTo(task2.getTimeEnd());
+                    }
+                };
+                FXCollections.sort(tableViewRecently.getItems(), comparator);
+                return true;
+            }
+        });
     }
 
     private List<Task> filterTaskListSelectedChoiceBox(List<Task> list) {
@@ -573,6 +588,45 @@ public class WindowView implements View {
 
         recentlyEndColumn.setCellValueFactory(new PropertyValueFactory<>("timeEndToString"));
         recentlyEndColumn.setStyle("-fx-alignment: CENTER;");
+        recentlyEndColumn.setCellFactory(new Callback<TableColumn<Task, String>, TableCell<Task, String>>() {
+            @Override
+            public TableCell<Task, String> call(TableColumn<Task, String> column) {
+                return new TableCell<Task, String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+
+                        setText(empty ? "" : getItem());
+                        setGraphic(null);
+
+                        TableRow<Task> currentRow = getTableRow();
+
+                        System.out.println(item);
+//                        if (!isEmpty()) {
+//                            if (item.equals("a"))
+//                            currentRow.setStyle("-fx-background-color:lightcoral");
+//                            else
+//                                currentRow.setStyle("-fx-background-color:lightgreen");
+//                        }
+
+//                        if (item == null || empty) {
+                        if (isEmpty()) {
+                            setText(null);
+                            setStyle("");
+                        } else {
+
+                            setText(item);
+                            Task task = getTableView().getItems().get(getIndex());
+                            if (task.getLogin().equals("Nnov")) {
+                                setTextFill(Color.RED);
+                            } else {
+                                setTextFill(Color.BLACK);
+                            }
+                        }
+                    }
+                };
+            }
+        });
 
         recentlyFilenameColumn.setCellValueFactory(new PropertyValueFactory<>("filename"));
         recentlyFilenameColumn.setStyle("-fx-alignment: CENTER;");
@@ -778,7 +832,7 @@ public class WindowView implements View {
                 Platform.runLater(new Runnable() {
                     @Override
                     public void run() {
-                            leftStatusLabel.setText(s.toString());
+                        leftStatusLabel.setText(s.toString());
                     }
                 });
                 super.println(s);

@@ -1,6 +1,5 @@
 package myProject.model;
 
-import javafx.application.Platform;
 import myProject.Helper;
 import myProject.model.data.Session;
 import myProject.model.data.Task;
@@ -13,9 +12,9 @@ import java.util.*;
 public class MyModel {
 
     private Map<String, Session> allSessionsMap;
-    private Set<Task> completedTasks;
-    private Set<Task> uploadingTasks;
-    private Set<Task> uncompletedTasks;
+    private List<Task> completedTasks;
+    private List<Task> uploadingTasks;
+    private List<Task> uncompletedTasks;
 
     private OpenedFile openedFile = new OpenedFile();
 
@@ -38,9 +37,9 @@ public class MyModel {
 
     public MyModel() {
         allSessionsMap = new HashMap<>();
-        uploadingTasks = new HashSet<>();
-        completedTasks = new HashSet<>();
-        uncompletedTasks = new HashSet<>();
+        uploadingTasks = new ArrayList<>();
+        completedTasks = new ArrayList<>();
+        uncompletedTasks = new ArrayList<>();
     }
 
     public void setFullPath(String fullPath) {
@@ -48,12 +47,11 @@ public class MyModel {
     }
 
     public List<Task> getCompletedTasks() {
-        return new ArrayList<>(completedTasks);
+        return completedTasks;
     }
 
     public List<Task> getUncompletedTasks() {
-        List<Task> result = new ArrayList<>(uncompletedTasks);
-        Collections.sort(result, new Comparator<Task>() {
+        uncompletedTasks.sort(new Comparator<Task>() {
             @Override
             public int compare(Task task1, Task task2) {
                 long task1Time = task1.getTimeStart().getTime();
@@ -61,11 +59,11 @@ public class MyModel {
                 return task1Time > task2Time ? -1 : 1;
             }
         });
-        return result;
+        return uncompletedTasks;
     }
 
     public List<Task> getUploadingTasks() {
-        return new ArrayList<>(uploadingTasks);
+        return uploadingTasks;
     }
 
     public void init(FileSource fileSource) {
@@ -91,13 +89,13 @@ public class MyModel {
 
 //        Helper.print(allSessionsMap.size());
         removeBannedSessions();
-        getTasksUpdate();
+        tasksUpdate();
     }
 
     public void update() {
-        getDataUpdates();
+        dataUpdate();
         removeBannedSessions();
-        getTasksUpdate();
+        tasksUpdate();
     }
 
     private void removeBannedSessions() {
@@ -111,7 +109,7 @@ public class MyModel {
         }
     }
 
-    private void getDataUpdates() {
+    private void dataUpdate() {
         openedFile.update();
 
         List<String> list = new ArrayList<>();
@@ -149,10 +147,10 @@ public class MyModel {
         }
     }
 
-    private void getTasksUpdate() {
-        uploadingTasks = new HashSet<>();
-        completedTasks = new HashSet<>();
-        uncompletedTasks = new HashSet<>();
+    private void tasksUpdate() {
+        uploadingTasks = new ArrayList<>();
+        completedTasks = new ArrayList<>();
+        uncompletedTasks = new ArrayList<>();
         for (Session session : allSessionsMap.values()) {
 
             for (Task task : session.getTasks()) {
@@ -165,6 +163,12 @@ public class MyModel {
                     }
                 }
                 if (task.getState().equals(UploadState.END_UPLOAD)) {
+//                    for (Task completedTask : completedTasks) {
+//                        if (completedTask.getIDSession().equals(task.getIDSession()) &&
+//                                completedTask.getFilename().equals(task.getFilename())) {
+//                            System.out.println(task.getFilename());
+//                        }
+//                    }
                     completedTasks.add(task);
                 }
                 if (task.getState().equals(UploadState.ERROR_UPLOAD)) {
