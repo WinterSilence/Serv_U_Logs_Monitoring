@@ -111,11 +111,14 @@ public class MyModel {
 
     private void dataUpdate() {
         openedFile.update();
-
+        // Проверка колическтва онлайн сессий
+/*
         List<String> list = new ArrayList<>();
         Map<String, StringBuilder> map = openedFile.getNewUpdateMap();
         list.addAll(map.keySet());
         Helper.print(map.size() + " updated sessions - " + list);
+*/
+        int count = 0;
 
         Iterator<Map.Entry<String, StringBuilder>> iterator = openedFile.getNewUpdateMap().entrySet().iterator();
         while (iterator.hasNext()) {
@@ -131,20 +134,26 @@ public class MyModel {
                 continue;
             }
 
+            if (allSessionsMap.containsKey(key) && allSessionsMap.get(key).getData().equals(value.toString())) {
+                continue;
+            }
             allSessionsMap.put(key, session);
+            count++;
 
             if (session.isOffline()) {
                 iterator.remove();
             }
         }
 
-        for (Session session : allSessionsMap.values()) {
+        Helper.print("Check updated - " + count);
+
+/*        for (Session session : allSessionsMap.values()) {
             if (session.getLogin().equals(Helper.EMPTY_LOGIN_FIELD)) {
-                Helper.print(session.getIDSession() + " --- ");
+                Helper.print("************" + session.getIDSession() + "*************");
                 Helper.print(session.getData());
                 Helper.print("*******************************");
             }
-        }
+        }*/
     }
 
     private void tasksUpdate() {

@@ -176,8 +176,8 @@ public class OpenedFile {
     }
 
     public void setFullPath(String fullPath) {
-        initDataMap = new TreeMap<>();
-        newUpdateMap = new TreeMap<>();
+        initDataMap = new HashMap<>();
+        newUpdateMap = new HashMap<>();
         this.fullPath = fullPath;
     }
 

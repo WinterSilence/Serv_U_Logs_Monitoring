@@ -40,7 +40,8 @@ public class Session {
                     int startIndex = data.indexOf(" USER ") + 6;
                     int endIndex = startIndex + data.substring(startIndex).indexOf("\n");
                     login = data.substring(startIndex, endIndex);
-                    login = login.substring(0, 1).toUpperCase() + login.substring(1, login.length()).toLowerCase();
+                    login = login.length() == 0 ? Helper.EMPTY_LOGIN_FIELD :
+                            login.substring(0, 1).toUpperCase() + login.substring(1, login.length()).toLowerCase();
                 } else {
                     login = Helper.EMPTY_LOGIN_FIELD;
                 }

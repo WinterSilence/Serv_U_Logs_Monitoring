@@ -8,7 +8,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventTarget;
@@ -519,13 +518,6 @@ public class WindowView implements View {
 
         onlineClientColumn.setCellValueFactory(new PropertyValueFactory<>("client"));
         onlineClientColumn.setStyle("-fx-alignment: CENTER;");
-
-//        double tableWidthValue = tableViewOnline.widthProperty().getValue();
-//        double onlineConnectionWidthValue = onlineConnectionTimeColumn.getWidth();
-//        double percent = 1 - onlineConnectionWidthValue / tableWidthValue;
-//        onlineLoginColumn.prefWidthProperty().bind(tableViewOnline.widthProperty().multiply(percent * 0.3));
-//        onlineIPAddressColumn.prefWidthProperty().bind(tableViewOnline.widthProperty().multiply(percent * 0.4));
-//        onlineClientColumn.prefWidthProperty().bind(tableViewOnline.widthProperty().multiply(percent * 0.3));
     }
 
 
@@ -575,6 +567,30 @@ public class WindowView implements View {
             }
         });
 
+        tableViewRecently.setRowFactory(new Callback<TableView<Task>, TableRow<Task>>() {
+            @Override
+            public TableRow<Task> call(TableView<Task> tableView) {
+                return new TableRow<Task>() {
+                    @Override
+                    public void updateItem(Task task, boolean empty) {
+                        if (!empty) {
+                            if (task.getTimeEndToString().equals("") || task.getTimeEnd().before(Helper.yesterday())) {
+                                for (Node node : getChildren()) {
+                                    ((TableCell) node).setTextFill(Color.GREY);
+                                }
+                            } else {
+                                for (Node node : getChildren()) {
+                                    ((TableCell) node).setTextFill(Color.BLACK);
+                                }
+                            }
+
+                        }
+                        super.updateItem(task, empty);
+                    }
+                };
+            }
+        });
+
         recentlyTaskChoiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
@@ -588,45 +604,6 @@ public class WindowView implements View {
 
         recentlyEndColumn.setCellValueFactory(new PropertyValueFactory<>("timeEndToString"));
         recentlyEndColumn.setStyle("-fx-alignment: CENTER;");
-        recentlyEndColumn.setCellFactory(new Callback<TableColumn<Task, String>, TableCell<Task, String>>() {
-            @Override
-            public TableCell<Task, String> call(TableColumn<Task, String> column) {
-                return new TableCell<Task, String>() {
-                    @Override
-                    protected void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
-
-                        setText(empty ? "" : getItem());
-                        setGraphic(null);
-
-                        TableRow<Task> currentRow = getTableRow();
-
-                        System.out.println(item);
-//                        if (!isEmpty()) {
-//                            if (item.equals("a"))
-//                            currentRow.setStyle("-fx-background-color:lightcoral");
-//                            else
-//                                currentRow.setStyle("-fx-background-color:lightgreen");
-//                        }
-
-//                        if (item == null || empty) {
-                        if (isEmpty()) {
-                            setText(null);
-                            setStyle("");
-                        } else {
-
-                            setText(item);
-                            Task task = getTableView().getItems().get(getIndex());
-                            if (task.getLogin().equals("Nnov")) {
-                                setTextFill(Color.RED);
-                            } else {
-                                setTextFill(Color.BLACK);
-                            }
-                        }
-                    }
-                };
-            }
-        });
 
         recentlyFilenameColumn.setCellValueFactory(new PropertyValueFactory<>("filename"));
         recentlyFilenameColumn.setStyle("-fx-alignment: CENTER;");
@@ -645,18 +622,6 @@ public class WindowView implements View {
 
         recentlyFolderColumn.setCellValueFactory(new PropertyValueFactory<>("folder"));
         recentlyFolderColumn.setStyle("-fx-alignment: CENTER;");
-
-/*
-        double tableWidthValue = tableViewRecently.widthProperty().getValue();
-        double recentlyEndTimeWidthValue = recentlyStartColumn.getWidth() * 5;
-        double percent = 1 - recentlyEndTimeWidthValue / tableWidthValue;
-
-        recentlyFilenameColumn.prefWidthProperty().bind(tableViewRecently.widthProperty().multiply(percent * 0.45));
-
-        recentlyLoginColumn.prefWidthProperty().bind(tableViewRecently.widthProperty().multiply(percent * 0.20));
-
-        recentlyFolderColumn.prefWidthProperty().bind(tableViewRecently.widthProperty().multiply(percent * 0.35));
-*/
     }
 
     private void contextMenuRecentlyUploadedFiles(TableCell tableCell) {

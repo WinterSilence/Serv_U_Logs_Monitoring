@@ -4,7 +4,9 @@ import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 public class Helper {
     private static final char[][] charTable = new char[65536][];
@@ -117,7 +119,7 @@ public class Helper {
         if (!from.exists()) {
             try {
                 from = Files.createFile(from.toPath()).toFile();
-            }catch (IOException ex){
+            } catch (IOException ex) {
                 log(ex);
             }
         }
@@ -159,4 +161,14 @@ public class Helper {
         }
     }
 
+
+    public static Date yesterday() {
+        Calendar cal = new GregorianCalendar();
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        cal.set(Calendar.MILLISECOND, 999);
+        cal.add(Calendar.DATE, -1);
+        return cal.getTime();
+    }
 }

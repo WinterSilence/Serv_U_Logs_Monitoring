@@ -8,7 +8,6 @@ import org.apache.commons.net.ftp.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 
 public class FtpSource implements FileSource {
@@ -67,12 +66,6 @@ public class FtpSource implements FileSource {
         this.password = password;
     }
 
-    private Date yesterday() {
-        final Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -1);
-        return cal.getTime();
-    }
-
     public boolean connectToFtp() {
 
         FTPClientConfig config = new FTPClientConfig();
@@ -122,7 +115,7 @@ public class FtpSource implements FileSource {
             ftpClient.enterLocalPassiveMode();
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
 
-            String yesterdayFilename = filenameDateFormat.format(yesterday()) + ".log";
+            String yesterdayFilename = filenameDateFormat.format(Helper.yesterday()) + ".log";
             File yesterdayFileFromFTP = createLocalFile("fromFTP" + yesterdayFilename);
             boolean success = downloadFromFTP(yesterdayFileFromFTP, folderFrom + File.separator + yesterdayFilename);
             if (success) {
