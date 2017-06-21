@@ -68,9 +68,9 @@ public class Helper {
 
     public final static String EMPTY_LOGIN_FIELD = "_UNKNOWN";
 
-    public static void log(Exception exception) {
-        exception.printStackTrace();
-        writeLog(exception.toString());
+    public static void log(Throwable throwable) {
+        throwable.printStackTrace();
+        writeLog(throwable.toString() + " - " + new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date()));
     }
 
     public static void pause(long seconds) {

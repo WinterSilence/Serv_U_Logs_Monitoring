@@ -34,7 +34,7 @@ public class FtpSource implements FileSource {
             try {
                 ftpClient = new FTPClient();
             } catch (Throwable thr) {
-                Helper.writeLog(thr.toString());
+                Helper.log(thr);
             }
         } catch (IOException ex) {
             Helper.log(ex);
