@@ -7,6 +7,7 @@ import myProject.model.data.UploadState;
 import myProject.model.infoFromFile.FileSource;
 import myProject.model.infoFromFile.OpenedFile;
 
+import java.io.File;
 import java.util.*;
 
 public class MyModel {
@@ -156,6 +157,8 @@ public class MyModel {
         }*/
     }
 
+//    private Map<File, Long> tasksSizeMap = new HashMap<>();
+
     private void tasksUpdate() {
         uploadingTasks = new ArrayList<>();
         completedTasks = new ArrayList<>();
@@ -166,9 +169,42 @@ public class MyModel {
                 if (task.getState().equals(UploadState.START_UPLOAD) &&
                         allSessionsMap.containsKey(task.getIDSession())) {
                     if (!allSessionsMap.get(task.getIDSession()).isOffline()) {
-                        uploadingTasks.add(task);
+                        System.out.println("before - " + task.getState());
+
+                        File fileTask = new File(Helper.renameFolder(task.getFolder().toLowerCase()) + File.separator + task.getFilename());
+                        if (fileTask.exists()) {
+//                            if (!tasksSizeMap.containsKey(fileTask)) {
+//                                tasksSizeMap.put(fileTask, fileTask.lastModified());
+                            if (new Date().getTime() - fileTask.lastModified() < 8 * 60 * 60000) {
+                                uploadingTasks.add(task);
+                            } else {
+                                System.out.println(new Date().getTime() - fileTask.lastModified());
+                                task.setState(UploadState.END_UPLOAD);
+                            }
+
+//                        } else {
+//                            if (new Date().getTime() - tasksSizeMap.get(fileTask) > 60000) {
+//                                tasksSizeMap.remove(fileTask);
+
+//                        }
+                        } else {
+                            System.out.println("not exist - " + fileTask.getAbsolutePath());
+                            task.setState(UploadState.ERROR_UPLOAD);
+                        }
+//                        task.setState(UploadState.ERROR_UPLOAD);
+
+                        System.out.println("after - " + task.getState());
+                        System.out.println("uploadingTasks size = " + uploadingTasks.size());
+//                        System.out.println("tasksSizeMap size = " + tasksSizeMap.size());
+                        System.out.println("*******************************");
+/*
+                        for (Long looo : tasksSizeMap.values()) {
+                            System.out.println(new Date().getTime() - looo);
+                        }
+*/
+//                        uploadingTasks.add(task);
                     } else {
-                        task.setStateErrorUpload();
+                        task.setState(UploadState.ERROR_UPLOAD);
                     }
                 }
                 if (task.getState().equals(UploadState.END_UPLOAD)) {
@@ -185,6 +221,7 @@ public class MyModel {
                 }
             }
         }
+
     }
 
     public Map<String, Session> getOnlineSessionsMap() {

@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import myProject.Helper;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.nio.charset.Charset;
 
@@ -46,7 +47,7 @@ public class OpenedFile {
                 String currentLine;
 
                 while ((currentLine = bufferedReader.readLine()) != null) {
-                    checkAndInputStringToMap(currentLine, initDataMap);
+                    checkAndInputStringToMap(currentLine, initDataMap);              // yesterdayDataMap
                 }
             } catch (IOException ex) {
                 Helper.print("Try number " + (count + 1));
@@ -58,11 +59,45 @@ public class OpenedFile {
         }
         Helper.print("Yesterday - " + yesterdayDataMap.size());
 
-        File currentFile = allFiles.get(0);
-        if (currentFile != null) {
-            fullPath = currentFile.getAbsolutePath();
+        for (File file : allFiles) {
+            // Searching for today File
+            if (file.getName().equals(new SimpleDateFormat("yyyy_MM_dd").format(new Date()) + ".log")) {
+                fullPath = file.getAbsolutePath();
+                while (count != TRY_COUNT) {
+                    try (FileInputStream fis = new FileInputStream(file);
+                         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")))) {
+                        String currentLine;
+
+                        while ((currentLine = bufferedReader.readLine()) != null) {
+                            checkAndInputStringToMap(currentLine, initDataMap);
+                            lastLine = currentLine;
+                        }
+                        initBytes = file.length() - lastLine.length() - 2; // минус длина строки и перенос строки !!!
+                        if (initBytes < 0) initBytes = 0;
+                        isOffline = false;
+                        Helper.print("Today - " + initDataMap.size());
+                        return;
+                    } catch (IOException ex) {
+                        Helper.print("Try number " + (count + 1));
+                        Helper.log(ex);
+                        count++;
+                        Helper.pause(5);
+                    }
+                }
+                return;
+            }
+        }
+        try {
+            throw new FileNotFoundException();
+        } catch (FileNotFoundException ex) {
+            Helper.log(ex);
+            Platform.exit();
+        }
+/*
+        if (todayFile != null) {
+            fullPath = todayFile.getAbsolutePath();
             while (count != TRY_COUNT) {
-                try (FileInputStream fis = new FileInputStream(currentFile);
+                try (FileInputStream fis = new FileInputStream(todayFile);
                      BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")))) {
                     String currentLine;
 
@@ -70,8 +105,7 @@ public class OpenedFile {
                         checkAndInputStringToMap(currentLine, initDataMap);
                         lastLine = currentLine;
                     }
-                    initBytes = currentFile.length() - lastLine.length() - 2; // минус длина строки и перенос строки !!!
-//                Helper.print(initBytes);
+                    initBytes = todayFile.length() - lastLine.length() - 2; // минус длина строки и перенос строки !!!
                     if (initBytes < 0) initBytes = 0;
                     isOffline = false;
                     Helper.print("Today - " + initDataMap.size());
@@ -91,6 +125,7 @@ public class OpenedFile {
                 Platform.exit();
             }
         }
+*/
     }
 
     public void update() {

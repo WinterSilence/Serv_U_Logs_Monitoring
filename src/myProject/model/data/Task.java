@@ -24,7 +24,6 @@ public class Task {
     }
 
     public void startUpload(String data) {
-
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("ddMMMyy HH:mm:ss", Locale.US);
             timeStart = sdf.parse(data.substring(9, 26));
@@ -53,10 +52,6 @@ public class Task {
         speed = String.format("%.2f", intSpeed).concat(" MB/sec");
         state = UploadState.END_UPLOAD;
         unitFile.setSize(data.substring(data.lastIndexOf(" - ") + 3, data.lastIndexOf(" Bytes") + 6));
-    }
-
-    public void setStateErrorUpload() {
-        state = UploadState.ERROR_UPLOAD;
     }
 
     public Date getTimeStart() {
@@ -103,6 +98,10 @@ public class Task {
 
     public UploadState getState() {
         return state;
+    }
+
+    public void setState(UploadState state) {
+        this.state = state;
     }
 
     public String getSize() {

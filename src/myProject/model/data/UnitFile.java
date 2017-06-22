@@ -35,7 +35,7 @@ public class UnitFile {
 
         UnitFile unitFile = (UnitFile) obj;
 
-        return file.equals(unitFile.file) && size.equals(unitFile.size);
+        return file.equals(unitFile.file);// && size.equals(unitFile.size);
     }
 
     @Override

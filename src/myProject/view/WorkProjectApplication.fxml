@@ -135,7 +135,7 @@
                   </Label>
                   <Button fx:id="checkHoursButton" layoutX="220.0" layoutY="22.0" mnemonicParsing="false" style="-fx-text-fill: RED;" text="Hours" />
                   <ChoiceBox fx:id="recentlyTaskChoiceBox" layoutY="48.0" prefWidth="150.0" AnchorPane.rightAnchor="6.0" />
-                  <Label fx:id="numberOfHours" layoutX="238.0" layoutY="6.0" text="24" textFill="#9f9f9f">
+                  <Label fx:id="numberOfHours" layoutX="238.0" layoutY="6.0" text="48" textFill="#9f9f9f">
                      <font>
                         <Font size="10.0" />
                      </font>

@@ -104,8 +104,8 @@ public class Helper {
 
     // Переименование/преобразование пути к папкам из вида H:\FTPSERVER\ в \\ftpres и т.п.
 
-    public static String renameFolder(File file) {
-        String result = file.getAbsolutePath().toLowerCase();
+    public static String renameFolder(String folder) {
+        String result = folder;
         result = result.replaceFirst("h:\\\\ftpserver\\\\", "\\\\\\\\ftpres\\\\");
         result = result.replaceFirst("u:\\\\obmen-utro\\\\", "\\\\\\\\ftpres\\\\obmen-utro\\$\\\\");
         result = result.replaceFirst("e:\\\\static_folders\\\\culture", "\\\\\\\\ftpres\\\\culture\\$\\\\");

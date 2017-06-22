@@ -5,6 +5,10 @@ import myProject.model.MyModel;
 import myProject.model.infoFromFile.FileSource;
 import myProject.view.WindowView;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
 public class FXMLController implements Controller {
 
     private MyModel myModel;
@@ -25,9 +29,21 @@ public class FXMLController implements Controller {
                 Helper.print("Establish connection");
                 myModel.init(fileSource);
                 view.update();
-
                 while (!myModel.isOffline()) {
-                    myModel.update();                    // Observe
+                    Date currentDate = new Date();
+                    Calendar cal = new GregorianCalendar();
+                    cal.set(Calendar.HOUR_OF_DAY, 9);
+                    cal.set(Calendar.MINUTE, 10);
+                    cal.set(Calendar.SECOND, 0);
+                    cal.set(Calendar.MILLISECOND, 999);
+                    Date anotherDate = cal.getTime();
+                    if (currentDate.compareTo(anotherDate) > 0) {
+                        System.out.println("NEW DAY");
+                        myModel.init(fileSource);
+                    } else {
+                        System.out.println("NOT_NEW_DAY");
+                        myModel.update();
+                    }
                     view.update();
                     Helper.pause(5);
                 }

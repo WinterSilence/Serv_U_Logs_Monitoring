@@ -42,6 +42,7 @@ import myProject.controller.FXMLController;
 import myProject.model.MyModel;
 import myProject.model.data.Session;
 import myProject.model.data.Task;
+import myProject.model.data.UploadState;
 import myProject.model.infoFromFile.FileSourceFactory;
 import myProject.model.infoFromFile.FtpSource;
 
@@ -50,6 +51,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
@@ -62,12 +65,11 @@ public class WindowView implements View {
     private final int OPEN_BUTTON = 0;
     private final int EXIT_BUTTON = 7;
 
-
     private FXMLController fxmlController;
     private MyModel myModel;
 
     private Parent root;
-    private String title = "WorkProjectApp 20170618";
+    private String title = "WorkProjectApp 20170622";
     private TableView<Session> tableViewOnline; // Online Sessions
     private TableView<Task> tableViewRecently;  // Recently uploaded files
     private TableView<Task> tableViewUploading; // Uploading files
@@ -106,13 +108,13 @@ public class WindowView implements View {
         setOpenMenuButton(stage);
         setExitMenuButton();
         setStartStopButton();
-        setCheckHoursButton(stage);
+        setCheckHoursButton();
         setFTPButton();
-        setHideShowSessionTable(stage);
+        setHideShowSessionTable();
         setLeftStatusLabel();
     }
 
-    private void setHideShowSessionTable(Stage stage) {
+    private void setHideShowSessionTable() {
         AnchorPane anchorPaneUploadingFiles = (AnchorPane) splitPane.lookup("#anchorPaneUploadingFiles");
         Button button = (Button) anchorPaneUploadingFiles.lookup("#hideShowSessionTableButton");
         AnchorPane anchorPaneTableViewOnline = (AnchorPane) splitPane.lookup("#anchorPaneTableViewOnline");
@@ -138,7 +140,7 @@ public class WindowView implements View {
         });
     }
 
-    private void setCheckHoursButton(Stage stage) {
+    private void setCheckHoursButton() {
         AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
         Button checkHoursButton = (Button) anchorPaneRecently.lookup("#checkHoursButton");
 
@@ -386,45 +388,18 @@ public class WindowView implements View {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                tableViewOnline.setItems(FXCollections.observableArrayList(myModel.getOnlineSessionsMap().values()));
+                setTableViewOnline();
 
-                tableViewOnline.sortPolicyProperty().set(new Callback<TableView<Session>, Boolean>() {
-                    @Override
-                    public Boolean call(TableView<Session> param) {
-                        Comparator<Session> comparator = new Comparator<Session>() {
-                            @Override
-                            public int compare(Session o1, Session o2) {
-                                return -o1.getConnectionTime().compareTo(o2.getConnectionTime());
-                            }
-                        };
-                        FXCollections.sort(tableViewOnline.getItems(), comparator);
-                        return true;
-                    }
-                });
+                setTableViewRecently();
 
-                setTableViewRecentlyItems();
-
-                tableViewUploading.setItems(FXCollections.observableArrayList(myModel.getUploadingTasks()));
-                tableViewUploading.sortPolicyProperty().set(new Callback<TableView<Task>, Boolean>() {
-                    @Override
-                    public Boolean call(TableView<Task> param) {
-                        Comparator<Task> comparator = new Comparator<Task>() {
-                            @Override
-                            public int compare(Task task1, Task task2) {
-                                return -task1.getTimeStart().compareTo(task2.getTimeStart());
-                            }
-                        };
-                        FXCollections.sort(tableViewUploading.getItems(), comparator);
-                        return true;
-                    }
-                });
+                setTableViewUploading();
             }
         });
     }
 
     private TreeSet<String> recentFilesLogins = new TreeSet<>();
 
-    private void setTableViewRecentlyItems() {
+    private void setTableViewRecently() {
         List<Task> resultTableRecentlyFiles = filterTaskListHours(myModel.getCompletedTasks());
 
         resultTableRecentlyFiles.addAll(filterTaskListHours(myModel.getUncompletedTasks()));
@@ -466,34 +441,136 @@ public class WindowView implements View {
                 return true;
             }
         });
+
+        tableViewRecently.setRowFactory(new Callback<TableView<Task>, TableRow<Task>>() {
+            @Override
+            public TableRow<Task> call(TableView<Task> tableView) {
+                return new TableRow<Task>() {
+                    @Override
+                    public void updateItem(Task task, boolean empty) {
+                        if (!empty) {
+                            if (task.getTimeEndToString().equals("") || task.getTimeEnd().before(Helper.yesterday())) {
+                                for (Node node : getChildren()) {
+                                    ((TableCell) node).setTextFill(Color.GREY);
+                                }
+                            } else {
+                                for (Node node : getChildren()) {
+                                    ((TableCell) node).setTextFill(Color.BLACK);
+                                }
+                            }
+
+                        }
+                        super.updateItem(task, empty);
+                    }
+                };
+            }
+        });
+    }
+
+    private void setTableViewOnline() {
+        List<Session> resultListOnlineSessions = new ArrayList<>();
+        for (Session session : myModel.getOnlineSessionsMap().values()) {
+            if (!session.isEmpty()) {
+                for (Task task : session.getTasks()) {
+                    if (task.getState() == UploadState.START_UPLOAD) {
+                        resultListOnlineSessions.add(session);
+                        break;
+                    }
+                }
+            }
+        }
+        Collections.sort(resultListOnlineSessions, new Comparator<Session>() {
+            @Override
+            public int compare(Session session1, Session session2) {
+                return session1.getConnectionTime().compareTo(session2.getConnectionTime());
+            }
+        });
+        tableViewOnline.setItems(FXCollections.observableArrayList(resultListOnlineSessions));
+
+        tableViewOnline.sortPolicyProperty().set(new Callback<TableView<Session>, Boolean>() {
+            @Override
+            public Boolean call(TableView<Session> param) {
+                Comparator<Session> comparator = new Comparator<Session>() {
+                    @Override
+                    public int compare(Session o1, Session o2) {
+                        return -o1.getConnectionTime().compareTo(o2.getConnectionTime());
+                    }
+                };
+                FXCollections.sort(tableViewOnline.getItems(), comparator);
+                return true;
+            }
+        });
+
+        tableViewOnline.setRowFactory(new Callback<TableView<Session>, TableRow<Session>>() {
+            @Override
+            public TableRow<Session> call(TableView<Session> tableView) {
+                return new TableRow<Session>() {
+                    @Override
+                    public void updateItem(Session session, boolean empty) {
+
+                        if (!empty) {
+                            if (session.getConnectionTime().before(Helper.yesterday())) {
+                                for (Node node : getChildren()) {
+                                    ((TableCell) node).setTextFill(Color.GREY);
+                                }
+                            } else {
+                                for (Node node : getChildren()) {
+                                    ((TableCell) node).setTextFill(Color.BLACK);
+                                }
+                            }
+                        }
+                        super.updateItem(session, empty);
+                    }
+                };
+
+            }
+        });
+    }
+
+    private void setTableViewUploading() {
+        tableViewUploading.setItems(FXCollections.observableArrayList(myModel.getUploadingTasks()));
+        tableViewUploading.sortPolicyProperty().set(new Callback<TableView<Task>, Boolean>() {
+            @Override
+            public Boolean call(TableView<Task> param) {
+                Comparator<Task> comparator = new Comparator<Task>() {
+                    @Override
+                    public int compare(Task task1, Task task2) {
+                        return -task1.getTimeStart().compareTo(task2.getTimeStart());
+                    }
+                };
+                FXCollections.sort(tableViewUploading.getItems(), comparator);
+                return true;
+            }
+        });
     }
 
     private List<Task> filterTaskListSelectedChoiceBox(List<Task> list) {
         if (selectedLogin.equals(" All")) return list;
         List<Task> result = new ArrayList<>();
         for (Task task : list) {
-            if (task.getLogin().equals(selectedLogin)) result.add(task);
+            if (task.getLogin().equals(selectedLogin)) {
+                result.add(task);
+            }
         }
         return result;
     }
 
     private List<Task> filterTaskListHours(List<Task> list) {
         Date currentDate = new Date();
+        List<Task> result = new ArrayList<>();
 
-        Iterator<Task> taskIterator = list.iterator();
-        while (taskIterator.hasNext()) {
-            Task task = taskIterator.next();
-            long currTime = 0;
+        for (Task task : list) {
+            long currTime;
             if (task.getTimeEnd() != null) {
                 currTime = currentDate.getTime() - task.getTimeEnd().getTime();
             } else {
                 currTime = currentDate.getTime() - task.getTimeStart().getTime();
             }
-            if (currTime > checkHours * 3_600_000L) {
-                taskIterator.remove();
+            if (currTime < checkHours * 3_600_000L) {
+                result.add(task);
             }
         }
-        return list;
+        return result;
     }
 
     private void showOnlineSessions() {
@@ -508,7 +585,6 @@ public class WindowView implements View {
 
         onlineConnectionTimeColumn.setCellValueFactory(new PropertyValueFactory<>("time"));
         onlineConnectionTimeColumn.setStyle("-fx-alignment: CENTER;");
-
 
         onlineLoginColumn.setCellValueFactory(new PropertyValueFactory<>("login"));
         onlineLoginColumn.setStyle("-fx-alignment: CENTER;");
@@ -567,30 +643,6 @@ public class WindowView implements View {
             }
         });
 
-        tableViewRecently.setRowFactory(new Callback<TableView<Task>, TableRow<Task>>() {
-            @Override
-            public TableRow<Task> call(TableView<Task> tableView) {
-                return new TableRow<Task>() {
-                    @Override
-                    public void updateItem(Task task, boolean empty) {
-                        if (!empty) {
-                            if (task.getTimeEndToString().equals("") || task.getTimeEnd().before(Helper.yesterday())) {
-                                for (Node node : getChildren()) {
-                                    ((TableCell) node).setTextFill(Color.GREY);
-                                }
-                            } else {
-                                for (Node node : getChildren()) {
-                                    ((TableCell) node).setTextFill(Color.BLACK);
-                                }
-                            }
-
-                        }
-                        super.updateItem(task, empty);
-                    }
-                };
-            }
-        });
-
         recentlyTaskChoiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
@@ -641,7 +693,7 @@ public class WindowView implements View {
         Task task = (Task) tableCell.getTableRow().getItem();
         if (task != null) {
             File folderFile = task.getUnitFile().getFile().getParentFile();
-            String pathToFolder = Helper.renameFolder(folderFile);
+            String pathToFolder = Helper.renameFolder(folderFile.getAbsolutePath().toLowerCase());
 
             File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
 

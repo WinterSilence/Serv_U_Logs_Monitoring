@@ -88,10 +88,29 @@ public class Session {
 //                startFileTransfer("Start downloading", str);
 //            }
 
-            // Начало загрузки
-            if (str.contains(") Receiving file \"")) {
+            // Начало загрузки 1
+            if (str.contains(") Receiving file \"")) { // STOR !!!
                 startFileTransfer(str);
             }
+/*
+            // Начало загрузки 2
+            if (str.contains(" STOR ")) {
+                int startIndex = str.indexOf(" STOR ") + 6;
+                int endIndex = str.length();
+                String filename = str.substring(startIndex, endIndex);
+                for (Task task : tasks) {
+                    if (task.getFilename().equals(filename) && IDSession.equals(task.getIDSession())) {
+                        System.out.println("**************************************");
+                        System.out.println(filename + " - STOR check " + IDSession);
+                        System.out.println(login);
+//                        System.out.println(data);
+                        System.out.println("**************************************");
+                    } else {
+
+                    }
+                }
+            }
+*/
             // Конец загрузки
             if (str.contains(") Received file \"")) {
                 endUpload(str);
@@ -116,10 +135,23 @@ public class Session {
     private void startFileTransfer(String data) {
         Task task = new Task(login, IDSession);
         task.startUpload(data);
-        tasks.add(task);
+        addTask(task);
+    }
+
+    private void addTask(Task taskToAdd) {
+/*
+        for (Task task : tasks) {
+            if (task.getFilename().equals(taskToAdd.getFilename())){
+                tasks.remove(task);
+                break;
+            }
+        }
+*/
+        tasks.add(taskToAdd);
     }
 
     private void endUpload(String data) {
+        // End uploading exists, but have no start upload
         boolean found = false;
         for (Task task : tasks) {
             int startIndex = data.indexOf(" Received file \"") + 16;
@@ -134,10 +166,12 @@ public class Session {
             Task task = new Task(login, IDSession);
             task.startUpload(data);
             task.endUpload(data);
-            tasks.add(task);
+            addTask(task);
+/*
             Helper.print(task);
             Helper.print("Check found: " + login + " - " + IDSession + " - " + "task: " + task.getFilename() +
                     " - tasks.size: " + tasks.size());
+*/
         }
     }
 
@@ -146,7 +180,7 @@ public class Session {
             int startIndex = data.indexOf(") Error receiving file \"") + 24;
             File file = new File(data.substring(startIndex, data.indexOf("\"", startIndex)));
             if (task.getFullname().equals(file.getAbsolutePath())) {
-                task.setStateErrorUpload();
+                task.setState(UploadState.ERROR_UPLOAD);
                 break;
             }
         }
@@ -158,7 +192,7 @@ public class Session {
             int endIndex = data.lastIndexOf(" aborted.");
             File file = new File(data.substring(startIndex, endIndex));
             if (task.getFilename().equals(file.getName()) && task.getState() != UploadState.ERROR_UPLOAD) {
-                task.setStateErrorUpload();
+                task.setState(UploadState.ERROR_UPLOAD);
             }
         }
     }
