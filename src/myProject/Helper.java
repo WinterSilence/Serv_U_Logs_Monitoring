@@ -123,12 +123,8 @@ public class Helper {
                 log(ex);
             }
         }
-        try (FileChannel source = new FileInputStream(from).getChannel();
-             FileChannel destination = new FileOutputStream(to).getChannel()) {
-            destination.transferFrom(source, 0, source.size());
-            return true;
-        } catch (FileNotFoundException ex) {
-            log(ex);
+        try {
+            Files.copy(from.toPath(), to.toPath());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -170,5 +166,13 @@ public class Helper {
         cal.set(Calendar.MILLISECOND, 999);
         cal.add(Calendar.DATE, -1);
         return cal.getTime();
+    }
+
+    public static int comparingDays(Calendar calendar1, Calendar calendar2) {
+        if (calendar1.get(Calendar.YEAR) != calendar2.get(Calendar.YEAR))
+            return calendar1.get(Calendar.YEAR) - calendar2.get(Calendar.YEAR);
+        if (calendar1.get(Calendar.MONTH) != calendar2.get(Calendar.MONTH))
+            return calendar1.get(Calendar.MONTH) - calendar2.get(Calendar.MONTH);
+        return calendar1.get(Calendar.DAY_OF_MONTH) - calendar2.get(Calendar.DAY_OF_MONTH);
     }
 }

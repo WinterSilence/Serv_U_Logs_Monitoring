@@ -51,8 +51,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
@@ -69,7 +67,7 @@ public class WindowView implements View {
     private MyModel myModel;
 
     private Parent root;
-    private String title = "WorkProjectApp 20170622";
+    private String title = "WorkProjectApp 20170626";
     private TableView<Session> tableViewOnline; // Online Sessions
     private TableView<Task> tableViewRecently;  // Recently uploaded files
     private TableView<Task> tableViewUploading; // Uploading files
@@ -112,6 +110,8 @@ public class WindowView implements View {
         setFTPButton();
         setHideShowSessionTable();
         setLeftStatusLabel();
+        setTodayButton();
+        setYesterdayButton();
     }
 
     private void setHideShowSessionTable() {
@@ -197,7 +197,7 @@ public class WindowView implements View {
             if (file != null) {
                 fileChooser.setInitialDirectory(file.getParentFile());
                 stage.setTitle(title + " - " + file.getName());
-                fxmlController.setFullPath(file.getAbsolutePath());
+                fxmlController.setTodayFullPath(file.getAbsolutePath());
                 //TODO !!!
 //                myModel.reset();
             }
@@ -208,25 +208,24 @@ public class WindowView implements View {
         AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
         Button startStopButton = (Button) anchorPaneRecently.lookup("#startButton");
 
-        BooleanProperty isOffline = new SimpleBooleanProperty(fxmlController.isOffline());
-
         startStopButton.setPrefWidth(60);
         startStopButton.setOnAction(event -> {
-            if (fxmlController.isOffline()) {
+            if (fxmlController.offlineProperty().get()) {
                 fxmlController.establishConnection(FileSourceFactory.createShareSource());
-                startStopButton.setDisable(true);
-                isOffline.set(false);
+
+//                startStopButton.setDisable(true);
             } else {
                 fxmlController.closeConnection();
-                isOffline.set(true);
+                System.out.println(fxmlController.isOffline());
             }
         });
 
-        isOffline.addListener(new ChangeListener<Boolean>() {
+        fxmlController.offlineProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                 AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
                 Button startStopButton = (Button) anchorPaneRecently.lookup("#startButton");
+
                 if (!newValue) {
                     startStopButton.setText("STOP");
                     setStartCircle(Color.LIGHTGREEN);
@@ -238,9 +237,27 @@ public class WindowView implements View {
                 }
             }
         });
-
     }
 
+    private void setTodayButton() {
+        AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
+        Button todayButton = (Button) anchorPaneRecently.lookup("#todayButton");
+
+        todayButton.setOnAction(event -> {
+            fxmlController.closeConnection();
+            fxmlController.establishConnectionTodayOnly(FileSourceFactory.createShareSource());
+        });
+    }
+
+    private void setYesterdayButton() {
+        AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
+        Button yesterdayButton = (Button) anchorPaneRecently.lookup("#yesterdayButton");
+
+        yesterdayButton.setOnAction(event -> {
+            fxmlController.closeConnection();
+            fxmlController.establishConnection(FileSourceFactory.createShareSource(), Helper.yesterday());
+        });
+    }
 
     private void setFTPButton() {
         AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
@@ -433,8 +450,13 @@ public class WindowView implements View {
                 Comparator<Task> comparator = new Comparator<Task>() {
                     @Override
                     public int compare(Task task1, Task task2) {
-                        if (task1.getTimeEnd() == null || task2.getTimeEnd() == null) return 0;
-                        return -task1.getTimeEnd().compareTo(task2.getTimeEnd());
+                        Date dateTask1;
+                        Date dateTask2;
+                        if (task1.getTimeEnd() != null) dateTask1 = task1.getTimeEnd();
+                        else dateTask1 = task1.getTimeStart();
+                        if (task2.getTimeEnd() != null) dateTask2 = task2.getTimeEnd();
+                        else dateTask2 = task2.getTimeStart();
+                        return dateTask2.compareTo(dateTask1);
                     }
                 };
                 FXCollections.sort(tableViewRecently.getItems(), comparator);
@@ -849,7 +871,8 @@ public class WindowView implements View {
                 Platform.runLater(new Runnable() {
                     @Override
                     public void run() {
-                        leftStatusLabel.setText(s.toString());
+//                        if (s != null)
+                            leftStatusLabel.setText(s.toString());
                     }
                 });
                 super.println(s);

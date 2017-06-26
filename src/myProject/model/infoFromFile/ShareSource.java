@@ -31,16 +31,4 @@ public class ShareSource implements FileSource {
         }
         return folder;
     }
-
-    public static void main(String[] args) {
-        ShareSource shareSource = new ShareSource();
-
-/*
-        if (folder.exists()) {
-            for (File file : folder.listFiles()) {
-                Helper.print(file);
-            }
-        }
-*/
-    }
 }

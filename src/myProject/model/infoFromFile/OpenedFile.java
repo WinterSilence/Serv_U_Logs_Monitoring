@@ -1,6 +1,5 @@
 package myProject.model.infoFromFile;
 
-import javafx.application.Platform;
 import myProject.Helper;
 
 import java.io.*;
@@ -11,10 +10,9 @@ import java.nio.charset.Charset;
 public class OpenedFile {
 
     private Map<String, StringBuilder> initDataMap;
-    private Map<String, StringBuilder> yesterdayDataMap;
     private Map<String, StringBuilder> newUpdateMap = new HashMap<>();
 
-    private String fullPath = "";
+    private String todayFileFullPath = "";
 
     private long initBytes;
     private String lastLine = "";
@@ -23,113 +21,57 @@ public class OpenedFile {
     private int count = 0;
     private final int TRY_COUNT = 5;
 
-    public void initDataMap(FileSource fileSource) {
-
-        initDataMap = new HashMap<>();
-        yesterdayDataMap = new HashMap<>();
-        String folder = fileSource.getSourceFolder();
-
-        File[] files = new File(folder).listFiles();
-        List<File> allFiles = new ArrayList<>();
-        if (files != null) {
-            for (File file : files) {
-                if (file.getName().matches("\\d{4}_\\d{2}_\\d{2}\\.log")) {
-                    allFiles.add(file);
-                }
-            }
-            Collections.reverse(allFiles);
-        }
-
-        if (allFiles.size() > 1) {
-            File yesterdayFile = allFiles.get(1);
-            try (FileInputStream fis = new FileInputStream(yesterdayFile);
-                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")))) {
-                String currentLine;
-
-                while ((currentLine = bufferedReader.readLine()) != null) {
-                    checkAndInputStringToMap(currentLine, initDataMap);              // yesterdayDataMap
-                }
+    public void initTodayDataMap(File folder) {
+        String todayDayFilename = new SimpleDateFormat("yyyy_MM_dd").format(new Date()) + ".log";
+        while (count != TRY_COUNT) {
+            try {
+                File todayFile = new File(folder + File.separator + todayDayFilename);
+                todayFileFullPath = todayFile.getAbsolutePath();
+                lastLine = initMapByDate(todayFile);
+                initBytes = todayFile.length() - lastLine.length() - 2; // минус длина строки и перенос строки !!!
+                if (initBytes < 0) initBytes = 0;
+                System.out.println("TADA");
+                isOffline = false;
+                break;
             } catch (IOException ex) {
-                Helper.print("Try number " + (count + 1));
                 Helper.log(ex);
                 count++;
+                Helper.print("Try number " + (count));
                 Helper.pause(5);
             }
-
         }
-        Helper.print("Yesterday - " + yesterdayDataMap.size());
+    }
 
-        for (File file : allFiles) {
-            // Searching for today File
-            if (file.getName().equals(new SimpleDateFormat("yyyy_MM_dd").format(new Date()) + ".log")) {
-                fullPath = file.getAbsolutePath();
-                while (count != TRY_COUNT) {
-                    try (FileInputStream fis = new FileInputStream(file);
-                         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")))) {
-                        String currentLine;
+    public void initAnyDateDataMap(File folder, Date anyDate) {
+        String yesterdayDayFilename = new SimpleDateFormat("yyyy_MM_dd").format(anyDate) + ".log";
 
-                        while ((currentLine = bufferedReader.readLine()) != null) {
-                            checkAndInputStringToMap(currentLine, initDataMap);
-                            lastLine = currentLine;
-                        }
-                        initBytes = file.length() - lastLine.length() - 2; // минус длина строки и перенос строки !!!
-                        if (initBytes < 0) initBytes = 0;
-                        isOffline = false;
-                        Helper.print("Today - " + initDataMap.size());
-                        return;
-                    } catch (IOException ex) {
-                        Helper.print("Try number " + (count + 1));
-                        Helper.log(ex);
-                        count++;
-                        Helper.pause(5);
-                    }
-                }
-                return;
-            }
-        }
+        File yesterdayFile = new File(folder + File.separator + yesterdayDayFilename);
         try {
-            throw new FileNotFoundException();
-        } catch (FileNotFoundException ex) {
+            initMapByDate(yesterdayFile);
+        } catch (IOException ex) {
             Helper.log(ex);
-            Platform.exit();
         }
-/*
-        if (todayFile != null) {
-            fullPath = todayFile.getAbsolutePath();
-            while (count != TRY_COUNT) {
-                try (FileInputStream fis = new FileInputStream(todayFile);
-                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")))) {
-                    String currentLine;
+    }
 
-                    while ((currentLine = bufferedReader.readLine()) != null) {
-                        checkAndInputStringToMap(currentLine, initDataMap);
-                        lastLine = currentLine;
-                    }
-                    initBytes = todayFile.length() - lastLine.length() - 2; // минус длина строки и перенос строки !!!
-                    if (initBytes < 0) initBytes = 0;
-                    isOffline = false;
-                    Helper.print("Today - " + initDataMap.size());
-                    return;
-                } catch (IOException ex) {
-                    Helper.print("Try number " + (count + 1));
-                    Helper.log(ex);
-                    count++;
-                    Helper.pause(5);
-                }
+    public void resetInitMap(){
+        initDataMap = new HashMap<>();
+    }
+
+    private String initMapByDate(File dateFile) throws IOException {
+        try (FileInputStream fis = new FileInputStream(dateFile);
+             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")))) {
+            String currentLine;
+            String result = "";
+            while ((currentLine = bufferedReader.readLine()) != null) {
+                checkAndInputStringToInitMap(currentLine);
+                result = currentLine;
             }
-        } else {
-            try {
-                throw new FileNotFoundException();
-            } catch (FileNotFoundException ex) {
-                Helper.log(ex);
-                Platform.exit();
-            }
+            return result;
         }
-*/
     }
 
     public void update() {
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(fullPath, "r")) {
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(todayFileFullPath, "r")) {
 
             randomAccessFile.seek(initBytes);
             String currentLine = null;
@@ -148,7 +90,7 @@ public class OpenedFile {
         }
     }
 
-    private void checkAndInputStringToMap(String string, Map<String, StringBuilder> map) {
+    private void checkAndInputStringToInitMap(String string) {
         if (string.length() > 35) {
             try {
                 String id = string.substring(string.indexOf(" - (") + 4, string.indexOf(") "));
@@ -161,10 +103,10 @@ public class OpenedFile {
                         StringBuilder value = initDataMap.get(id);
 
                         if (value != null) {
-                            map.put(id, value.append(string).append("\n"));
+                            initDataMap.put(id, value.append(string).append("\n"));
                         } else {
                             value = new StringBuilder(string + "\n");
-                            map.put(id, value);
+                            initDataMap.put(id, value);
                         }
                     }
                 }
@@ -210,10 +152,10 @@ public class OpenedFile {
         }
     }
 
-    public void setFullPath(String fullPath) {
+    public void setTodayFileFullPath(String todayFileFullPath) {
         initDataMap = new HashMap<>();
         newUpdateMap = new HashMap<>();
-        this.fullPath = fullPath;
+        this.todayFileFullPath = todayFileFullPath;
     }
 
     public Map<String, StringBuilder> getInitDataMap() {
@@ -228,8 +170,8 @@ public class OpenedFile {
         return isOffline;
     }
 
-    public void setOffline(boolean offline) {
-        isOffline = offline;
+    public void setOffline() {
+        isOffline = true;
     }
 
 }

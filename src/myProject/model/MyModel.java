@@ -36,15 +36,8 @@ public class MyModel {
         bannedLogins.add("kinopokaz-m24");
     }
 
-    public MyModel() {
-        allSessionsMap = new HashMap<>();
-        uploadingTasks = new ArrayList<>();
-        completedTasks = new ArrayList<>();
-        uncompletedTasks = new ArrayList<>();
-    }
-
-    public void setFullPath(String fullPath) {
-        openedFile.setFullPath(fullPath);
+    public void setTodayFullPath(String fullPath) {
+        openedFile.setTodayFileFullPath(fullPath);
     }
 
     public List<Task> getCompletedTasks() {
@@ -67,11 +60,16 @@ public class MyModel {
         return uploadingTasks;
     }
 
-    public void init(FileSource fileSource) {
-        openedFile.initDataMap(fileSource);
+    // Init today
+    public void initToday(FileSource fileSource) {
+        reset();
+
+        File mainFolderFile = new File(fileSource.getSourceFolder());
+
+        openedFile.resetInitMap();
+        openedFile.initTodayDataMap(mainFolderFile);
 
         Iterator<Map.Entry<String, StringBuilder>> iterator = openedFile.getInitDataMap().entrySet().iterator();
-//        for (Map.Entry<String, StringBuilder> pair : openedFile.getInitDataMap().entrySet()) {
         while (iterator.hasNext()) {
 
             Map.Entry<String, StringBuilder> pair = iterator.next();
@@ -87,11 +85,67 @@ public class MyModel {
 
             allSessionsMap.put(key, session);
         }
-
-//        Helper.print(allSessionsMap.size());
         removeBannedSessions();
         tasksUpdate();
     }
+
+    public void initDefault(FileSource fileSource) {
+        initToday(fileSource);
+        File mainFolderFile = new File(fileSource.getSourceFolder());
+
+        openedFile.initAnyDateDataMap(mainFolderFile, Helper.yesterday());
+
+        Iterator<Map.Entry<String, StringBuilder>> iterator = openedFile.getInitDataMap().entrySet().iterator();
+        while (iterator.hasNext()) {
+
+            Map.Entry<String, StringBuilder> pair = iterator.next();
+            String key = pair.getKey();                                      // ID Session
+            StringBuilder value = pair.getValue();                           // Data может быть неполной (не сначала)
+
+            Session session = new Session(key, value.toString());
+
+            if (session.isOffline() && session.isEmpty()) {
+                iterator.remove();
+                continue;
+            }
+
+            allSessionsMap.put(key, session);
+        }
+        removeBannedSessions();
+        tasksUpdate();
+    }
+
+    // Init with any date
+    public void init(FileSource fileSource, Date... dates) {
+        reset();
+
+        File mainFolderFile = new File(fileSource.getSourceFolder());
+
+        openedFile.resetInitMap();
+        for (Date date : dates) {
+            openedFile.initAnyDateDataMap(mainFolderFile, date);
+        }
+
+        Iterator<Map.Entry<String, StringBuilder>> iterator = openedFile.getInitDataMap().entrySet().iterator();
+        while (iterator.hasNext()) {
+
+            Map.Entry<String, StringBuilder> pair = iterator.next();
+            String key = pair.getKey();                                      // ID Session
+            StringBuilder value = pair.getValue();                           // Data может быть неполной (не сначала)
+
+            Session session = new Session(key, value.toString());
+
+            if (session.isOffline() && session.isEmpty()) {
+                iterator.remove();
+                continue;
+            }
+
+            allSessionsMap.put(key, session);
+        }
+        removeBannedSessions();
+        tasksUpdate();
+    }
+
 
     public void update() {
         dataUpdate();
@@ -147,14 +201,6 @@ public class MyModel {
         }
 
         Helper.print("Check updated - " + count);
-
-/*        for (Session session : allSessionsMap.values()) {
-            if (session.getLogin().equals(Helper.EMPTY_LOGIN_FIELD)) {
-                Helper.print("************" + session.getIDSession() + "*************");
-                Helper.print(session.getData());
-                Helper.print("*******************************");
-            }
-        }*/
     }
 
 //    private Map<File, Long> tasksSizeMap = new HashMap<>();
@@ -169,16 +215,12 @@ public class MyModel {
                 if (task.getState().equals(UploadState.START_UPLOAD) &&
                         allSessionsMap.containsKey(task.getIDSession())) {
                     if (!allSessionsMap.get(task.getIDSession()).isOffline()) {
-                        System.out.println("before - " + task.getState());
-
                         File fileTask = new File(Helper.renameFolder(task.getFolder().toLowerCase()) + File.separator + task.getFilename());
                         if (fileTask.exists()) {
-//                            if (!tasksSizeMap.containsKey(fileTask)) {
-//                                tasksSizeMap.put(fileTask, fileTask.lastModified());
                             if (new Date().getTime() - fileTask.lastModified() < 8 * 60 * 60000) {
                                 uploadingTasks.add(task);
                             } else {
-                                System.out.println(new Date().getTime() - fileTask.lastModified());
+                                System.err.println(new Date().getTime() - fileTask.lastModified());
                                 task.setState(UploadState.END_UPLOAD);
                             }
 
@@ -191,29 +233,13 @@ public class MyModel {
                             System.out.println("not exist - " + fileTask.getAbsolutePath());
                             task.setState(UploadState.ERROR_UPLOAD);
                         }
-//                        task.setState(UploadState.ERROR_UPLOAD);
-
-                        System.out.println("after - " + task.getState());
-                        System.out.println("uploadingTasks size = " + uploadingTasks.size());
-//                        System.out.println("tasksSizeMap size = " + tasksSizeMap.size());
-                        System.out.println("*******************************");
-/*
-                        for (Long looo : tasksSizeMap.values()) {
-                            System.out.println(new Date().getTime() - looo);
-                        }
-*/
 //                        uploadingTasks.add(task);
                     } else {
                         task.setState(UploadState.ERROR_UPLOAD);
                     }
                 }
                 if (task.getState().equals(UploadState.END_UPLOAD)) {
-//                    for (Task completedTask : completedTasks) {
-//                        if (completedTask.getIDSession().equals(task.getIDSession()) &&
-//                                completedTask.getFilename().equals(task.getFilename())) {
-//                            System.out.println(task.getFilename());
-//                        }
-//                    }
+
                     completedTasks.add(task);
                 }
                 if (task.getState().equals(UploadState.ERROR_UPLOAD)) {
@@ -234,8 +260,11 @@ public class MyModel {
         return result;
     }
 
-    public void reset() {
+    private void reset() {
         allSessionsMap = new HashMap<>();
+        uploadingTasks = new ArrayList<>();
+        completedTasks = new ArrayList<>();
+        uncompletedTasks = new ArrayList<>();
     }
 
     public boolean isOffline() {
@@ -243,6 +272,6 @@ public class MyModel {
     }
 
     public void setOffline() {
-        openedFile.setOffline(true);
+        openedFile.setOffline();
     }
 }
