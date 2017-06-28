@@ -3,11 +3,13 @@ package myProject.controller;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.stage.Stage;
 import myProject.Helper;
 import myProject.model.MyModel;
 import myProject.model.infoFromFile.FileSource;
 import myProject.view.WindowView;
 
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -23,6 +25,10 @@ public class FXMLController implements Controller {
         this.myModel = myModel;
     }
 
+    public void start(Stage stage) throws IOException{
+        view.startView(stage);
+    }
+
     public void setView(WindowView view) {
         this.view = view;
     }
@@ -31,14 +37,13 @@ public class FXMLController implements Controller {
         return offline;
     }
 
-    public void setOffline() {
+    private void setOffline() {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 offline.set(myModel.isOffline());
             }
         });
-
     }
 
     public void establishConnection(FileSource fileSource) {
@@ -78,6 +83,7 @@ public class FXMLController implements Controller {
                 myModel.initToday(fileSource);
                 view.update();
                 Calendar today = new GregorianCalendar();
+                setOffline();
                 while (!myModel.isOffline()) {
                     Calendar checkDate = new GregorianCalendar();
                     if (Helper.comparingDays(today, checkDate) != 0) {
@@ -89,6 +95,7 @@ public class FXMLController implements Controller {
                     view.update();
                     Helper.pause(5);
                 }
+                setOffline();
                 Helper.print("Disconnected today only");
             }
         });
@@ -102,12 +109,13 @@ public class FXMLController implements Controller {
             @Override
             public void run() {
                 Helper.print("Establish connection");
+                offline.set(false);
                 myModel.init(fileSource, dates);
                 view.update();
+                setOffline();
                 Helper.print("Disconnected");
             }
         });
-
         updateThread.setDaemon(true);
         updateThread.start();
     }

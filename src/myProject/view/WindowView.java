@@ -5,6 +5,8 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -31,6 +33,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -67,23 +70,45 @@ public class WindowView implements View {
     private MyModel myModel;
 
     private Parent root;
-    private String title = "WorkProjectApp 20170626";
+
     private TableView<Session> tableViewOnline; // Online Sessions
     private TableView<Task> tableViewRecently;  // Recently uploaded files
     private TableView<Task> tableViewUploading; // Uploading files
 
     private SplitPane splitPane;
     private VBox vBox;
+    private HBox hBox;
+    private AnchorPane anchorPaneRecently;
+
+    private Button startButton;
+    private Button stopButton;
+    private Button FTPButton;
+    private Button todayButton;
+    private Button yesterdayButton;
+
+
+    private Label startButtonText;
+    private Label todayButtonText;
+    private Label yesterdayButtonText;
+
+    private Label rightStatusLabel;
+
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
+
+    private String title = "WorkProjectApp 20170628";
     private String selectedLogin = " All";
 
     private TableColumn<Task, ?> sortColumn = null;
+    private StringProperty currentDate;
+    private StringProperty yesterdayDate;
 
     // Отображение Онлайн сессий и пришедших файлов за checkHours часов
     // default value = 48
     private int checkHours = 48;
+    private Stage stage;
 
+    private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM");
 
     public WindowView(MyModel myModel) {
         this.myModel = myModel;
@@ -93,11 +118,10 @@ public class WindowView implements View {
         this.fxmlController = fxmlController;
     }
 
-    public void startView(Stage stage) throws Exception {
+    public void startView(Stage stage) throws IOException {
+        this.stage = stage;
         root = FXMLLoader.load(getClass().getResource("WorkProjectApplication.fxml"));
         Scene scene = new Scene(root, 1280, 720);
-        splitPane = (SplitPane) root.lookup("#splitPane");
-        vBox = (VBox) root.lookup("#VBox");
         stage.setTitle(title);
         stage.setScene(scene);
         stage.show();
@@ -105,21 +129,98 @@ public class WindowView implements View {
         init();
         setOpenMenuButton(stage);
         setExitMenuButton();
-        setStartStopButton();
+        setStartButton();
+        setStopButton();
         setCheckHoursButton();
         setFTPButton();
         setHideShowSessionTable();
         setLeftStatusLabel();
         setTodayButton();
         setYesterdayButton();
+        setTodayButtonText();
+        setYesterdayButtonText();
+        setOfflineProperty();
+    }
+
+    private void init() {
+        vBox = (VBox) root.lookup("#VBox");
+        splitPane = (SplitPane) vBox.lookup("#splitPane");
+        hBox = (HBox) vBox.lookup("#HBox");
+
+        anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
+
+        tableViewOnline = (TableView<Session>) splitPane.lookup("#tableViewOnline");
+        tableViewRecently = (TableView<Task>) splitPane.lookup("#recentlyUploadedFiles");
+        tableViewUploading = (TableView<Task>) splitPane.lookup("#uploadingFiles");
+
+        startButton = (Button) anchorPaneRecently.lookup("#startButton");
+        stopButton = (Button) anchorPaneRecently.lookup("#stopButton");
+        FTPButton = (Button) anchorPaneRecently.lookup("#FTPbutton");
+        todayButton = (Button) anchorPaneRecently.lookup("#todayButton");
+        yesterdayButton = (Button) anchorPaneRecently.lookup("#yesterdayButton");
+
+        currentDate = new SimpleStringProperty(simpleDateFormat.format(new Date()));
+        yesterdayDate = new SimpleStringProperty(simpleDateFormat.format(Helper.yesterday()));
+
+        currentDate.addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                todayButtonText.setText(currentDate.getValue());
+            }
+        });
+
+        yesterdayDate.addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                yesterdayButtonText.setText(yesterdayDate.getValue());
+            }
+        });
+
+        startButtonText = (Label) anchorPaneRecently.lookup("#startButtonText");
+        rightStatusLabel = (Label) hBox.lookup("#rightStatusLabel");
+
+        recentlyTaskChoiceBox = (ChoiceBox<String>) splitPane.lookup("#recentlyTaskChoiceBox");
+
+        showOnlineSessions();
+        showRecentlyUploadedFiles();
+        showUploadingFiles();
+    }
+
+    private void setOfflineProperty() {
+        fxmlController.offlineProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if (!newValue) {
+                    setStartCircle(Color.LIGHTGREEN);
+                    stopButton.setDisable(false);
+                } else {
+                    setStartCircle(Color.RED);
+                    startButtonText.setVisible(true);
+                    startButton.setDisable(false);
+                    FTPButton.setDisable(false);
+                    todayButton.setDisable(false);
+                    yesterdayButton.setDisable(false);
+                }
+            }
+        });
+    }
+
+    private void setTodayButtonText() {
+        todayButtonText = (Label) anchorPaneRecently.lookup("#todayButtonText");
+        todayButtonText.setText(currentDate.getValue());
+    }
+
+    private void setYesterdayButtonText() {
+        yesterdayButtonText = (Label) anchorPaneRecently.lookup("#yesterdayButtonText");
+        yesterdayButtonText.setText(yesterdayDate.getValue());
     }
 
     private void setHideShowSessionTable() {
         AnchorPane anchorPaneUploadingFiles = (AnchorPane) splitPane.lookup("#anchorPaneUploadingFiles");
-        Button button = (Button) anchorPaneUploadingFiles.lookup("#hideShowSessionTableButton");
+        Button hideShowSessionTableButton = (Button) anchorPaneUploadingFiles.lookup("#hideShowSessionTableButton");
         AnchorPane anchorPaneTableViewOnline = (AnchorPane) splitPane.lookup("#anchorPaneTableViewOnline");
 
-        button.setOnAction(new EventHandler<ActionEvent>() {
+        hideShowSessionTableButton.setOnAction(new EventHandler<ActionEvent>() {
             private double divider = 0;
 
             @Override
@@ -129,19 +230,19 @@ public class WindowView implements View {
                     anchorPaneTableViewOnline.setMaxWidth(0);
                     divider = splitPane.getDividerPositions()[0];
                     splitPane.setDividerPosition(0, 0);
-                    button.setText("►");
+                    hideShowSessionTableButton.setText("►");
                 } else {
                     anchorPaneTableViewOnline.setMinWidth(Region.USE_COMPUTED_SIZE);
                     anchorPaneTableViewOnline.setMaxWidth(Region.USE_COMPUTED_SIZE);
                     splitPane.setDividerPosition(0, divider);
-                    button.setText("◄");
+                    hideShowSessionTableButton.setText("◄");
                 }
             }
         });
+        hideShowSessionTableButton.fire();
     }
 
     private void setCheckHoursButton() {
-        AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
         Button checkHoursButton = (Button) anchorPaneRecently.lookup("#checkHoursButton");
 
         checkHoursButton.setOnAction(event -> {
@@ -204,67 +305,51 @@ public class WindowView implements View {
         });
     }
 
-    private void setStartStopButton() {
-        AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
-        Button startStopButton = (Button) anchorPaneRecently.lookup("#startButton");
-
-        startStopButton.setPrefWidth(60);
-        startStopButton.setOnAction(event -> {
-            if (fxmlController.offlineProperty().get()) {
-                fxmlController.establishConnection(FileSourceFactory.createShareSource());
-
-//                startStopButton.setDisable(true);
-            } else {
-                fxmlController.closeConnection();
-                System.out.println(fxmlController.isOffline());
-            }
+    private void setStartButton() {
+        startButton.setOnAction(event -> {
+            fxmlController.establishConnection(FileSourceFactory.createShareSource());
+            startButtonText.setVisible(false);
+            startButton.setDisable(true);
+            FTPButton.setDisable(true);
+            todayButton.setDisable(true);
+            yesterdayButton.setDisable(true);
         });
+    }
 
-        fxmlController.offlineProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
-                Button startStopButton = (Button) anchorPaneRecently.lookup("#startButton");
-
-                if (!newValue) {
-                    startStopButton.setText("STOP");
-                    setStartCircle(Color.LIGHTGREEN);
-                    startStopButton.setDisable(false);
-                } else {
-                    setStartCircle(Color.RED);
-                    startStopButton.setText("START");
-                    startStopButton.setDisable(false);
-                }
-            }
+    private void setStopButton() {
+        stopButton.setOnAction(event -> {
+            fxmlController.closeConnection();
+            stopButton.setDisable(true);
         });
     }
 
     private void setTodayButton() {
-        AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
-        Button todayButton = (Button) anchorPaneRecently.lookup("#todayButton");
-
         todayButton.setOnAction(event -> {
-            fxmlController.closeConnection();
             fxmlController.establishConnectionTodayOnly(FileSourceFactory.createShareSource());
+            startButton.setDisable(true);
+            FTPButton.setDisable(true);
+            todayButton.setDisable(true);
+            yesterdayButton.setDisable(true);
         });
     }
 
     private void setYesterdayButton() {
-        AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
-        Button yesterdayButton = (Button) anchorPaneRecently.lookup("#yesterdayButton");
-
         yesterdayButton.setOnAction(event -> {
-            fxmlController.closeConnection();
             fxmlController.establishConnection(FileSourceFactory.createShareSource(), Helper.yesterday());
+            startButton.setDisable(true);
+            FTPButton.setDisable(true);
+            todayButton.setDisable(true);
+            yesterdayButton.setDisable(true);
         });
     }
 
     private void setFTPButton() {
-        AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
-        Button FTPButton = (Button) anchorPaneRecently.lookup("#FTPbutton");
-
-        FTPButton.setPrefWidth(60);
         FTPButton.setOnAction((ActionEvent event) -> {
+            startButtonText.setVisible(false);
+            startButton.setDisable(true);
+            FTPButton.setDisable(true);
+            todayButton.setDisable(true);
+            yesterdayButton.setDisable(true);
             TextInputDialog dialog = new TextInputDialog("ftp.vgtrk.com");
             dialog.setTitle("");
             dialog.setHeaderText("Enter FTP server: ");
@@ -306,9 +391,7 @@ public class WindowView implements View {
                             }
 */
                             break;
-                        } else
-
-                        {
+                        } else {
                             Helper.print("LOGIN FAIL");
                         }
                     }
@@ -320,6 +403,14 @@ public class WindowView implements View {
 //                                alert.showAndWait();
 //                  }
 */
+                fxmlController.offlineProperty().addListener(new ChangeListener<Boolean>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                        if (newValue) {
+                            ftpSource.stop();
+                        }
+                    }
+                });
             }
         });
     }
@@ -385,20 +476,8 @@ public class WindowView implements View {
     }
 
     private void setStartCircle(Color color) {
-        AnchorPane anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
         Circle startCircle = (Circle) anchorPaneRecently.lookup("#startCircle");
         startCircle.setFill(color);
-    }
-
-    public void init() {
-        tableViewOnline = (TableView<Session>) splitPane.lookup("#tableViewOnline");
-        tableViewRecently = (TableView<Task>) splitPane.lookup("#recentlyUploadedFiles");
-        tableViewUploading = (TableView<Task>) splitPane.lookup("#uploadingFiles");
-        recentlyTaskChoiceBox = (ChoiceBox<String>) splitPane.lookup("#recentlyTaskChoiceBox");
-
-        showOnlineSessions();
-        showRecentlyUploadedFiles();
-        showUploadingFiles();
     }
 
     public void update() {
@@ -410,6 +489,10 @@ public class WindowView implements View {
                 setTableViewRecently();
 
                 setTableViewUploading();
+
+                currentDate.set(simpleDateFormat.format(new Date()));
+
+                yesterdayDate.set(simpleDateFormat.format(Helper.yesterday()));
             }
         });
     }
@@ -436,11 +519,25 @@ public class WindowView implements View {
             recentFilesLogins = recentFilesLoginUpdate;
             recentlyTaskChoiceBox.setItems(FXCollections.observableArrayList(recentFilesLogins));
         }
-
         resultTableRecentlyFiles = filterTaskListSelectedChoiceBox(resultTableRecentlyFiles);
+        resultTableRecentlyFiles = filterTaskListSameTasks(resultTableRecentlyFiles);
+
+        resultTableRecentlyFiles.sort(new Comparator<Task>() {
+            @Override
+            public int compare(Task task1, Task task2) {
+                Date dateTask1;
+                Date dateTask2;
+                if (task1.getTimeEnd() != null) dateTask1 = task1.getTimeEnd();
+                else dateTask1 = task1.getTimeStart();
+                if (task2.getTimeEnd() != null) dateTask2 = task2.getTimeEnd();
+                else dateTask2 = task2.getTimeStart();
+                return dateTask2.compareTo(dateTask1);
+            }
+        });
 
         tableViewRecently.setItems(FXCollections.observableArrayList(resultTableRecentlyFiles));
-
+        // Сортировка с жёсткой привязкой к отображению (нельзя изменить в окне)
+/*
         if (sortColumn != null) {
             tableViewRecently.getSortOrder().add(sortColumn);
         }
@@ -463,6 +560,7 @@ public class WindowView implements View {
                 return true;
             }
         });
+*/
 
         tableViewRecently.setRowFactory(new Callback<TableView<Task>, TableRow<Task>>() {
             @Override
@@ -487,6 +585,62 @@ public class WindowView implements View {
                 };
             }
         });
+        setRightStatusLabelText("Size - " + resultTableRecentlyFiles.size());
+    }
+
+    private List<Task> filterTaskListSelectedChoiceBox(List<Task> list) {
+        if (selectedLogin.equals(" All")) return list;
+        List<Task> result = new ArrayList<>();
+        for (Task task : list) {
+            if (task.getLogin().equals(selectedLogin)) {
+                result.add(task);
+            }
+        }
+        return result;
+    }
+
+    private List<Task> filterTaskListHours(List<Task> list) {
+        Date currentDate = new Date();
+        List<Task> result = new ArrayList<>();
+        for (Task task : list) {
+            long currTime;
+            if (task.getTimeEnd() != null) {
+                currTime = currentDate.getTime() - task.getTimeEnd().getTime();
+            } else {
+                currTime = currentDate.getTime() - task.getTimeStart().getTime();
+            }
+            if (currTime < checkHours * 3_600_000L) {
+                result.add(task);
+            }
+        }
+        return result;
+    }
+
+    private List<Task> filterTaskListSameTasks(List<Task> list) {
+        List<Task> result = new ArrayList<>();
+        result.addAll(list);
+        Iterator<Task> iterator = result.iterator();
+        while (iterator.hasNext()) {
+            Task currentTask = iterator.next();
+            for (Task task : list) {
+                if (!currentTask.equals(task)
+                        && currentTask.getFilename().equals(task.getFilename())
+                        && currentTask.getLogin().equals(task.getLogin())
+                        && currentTask.getFolder().equals(task.getFolder())) {
+                    Date dateTask1;
+                    Date dateTask2;
+                    if (currentTask.getTimeEnd() != null) dateTask1 = currentTask.getTimeEnd();
+                    else dateTask1 = currentTask.getTimeStart();
+                    if (task.getTimeEnd() != null) dateTask2 = task.getTimeEnd();
+                    else dateTask2 = task.getTimeStart();
+                    if (dateTask2.compareTo(dateTask1) > 0) {
+                        iterator.remove();
+                    }
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
     private void setTableViewOnline() {
@@ -564,35 +718,6 @@ public class WindowView implements View {
                 return true;
             }
         });
-    }
-
-    private List<Task> filterTaskListSelectedChoiceBox(List<Task> list) {
-        if (selectedLogin.equals(" All")) return list;
-        List<Task> result = new ArrayList<>();
-        for (Task task : list) {
-            if (task.getLogin().equals(selectedLogin)) {
-                result.add(task);
-            }
-        }
-        return result;
-    }
-
-    private List<Task> filterTaskListHours(List<Task> list) {
-        Date currentDate = new Date();
-        List<Task> result = new ArrayList<>();
-
-        for (Task task : list) {
-            long currTime;
-            if (task.getTimeEnd() != null) {
-                currTime = currentDate.getTime() - task.getTimeEnd().getTime();
-            } else {
-                currTime = currentDate.getTime() - task.getTimeStart().getTime();
-            }
-            if (currTime < checkHours * 3_600_000L) {
-                result.add(task);
-            }
-        }
-        return result;
     }
 
     private void showOnlineSessions() {
@@ -707,10 +832,12 @@ public class WindowView implements View {
         MenuItem inDaletReserv = new MenuItem("в Dalet через резерв");
         MenuItem quantelNaPryamkiPC1 = new MenuItem("в Quantel на PC1");
         MenuItem quantelNaPryamkiPC2 = new MenuItem("в Quantel на PC2");
-        MenuItem copyToCulture = new MenuItem("В ТК Культура");
+        MenuItem copyToCulture = new MenuItem("в ТК Культура");
+        MenuItem copyToDezhchast = new MenuItem("в ДЧ");
+        MenuItem copyToUploadFolder = new MenuItem("Выберете папку ->");
 
         contextMenu.getItems().addAll(inQuantel, inDalet, inDaletFFAStrans, inDaletReserv, openFolder,
-                quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToCulture);
+                quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToCulture, copyToDezhchast, copyToUploadFolder);
         tableCell.setContextMenu(contextMenu);
         Task task = (Task) tableCell.getTableRow().getItem();
         if (task != null) {
@@ -793,6 +920,28 @@ public class WindowView implements View {
                 File fileTo = new File(cultureFolderPath + Helper.renameFromCirrilic(task.getFilename()));
                 fireCopyFile(fileFrom, fileTo, "Культуру");
             });
+            copyToDezhchast.setOnAction(event1 -> {
+                String dezhchastFolderPath = "\\\\ftpres\\upload\\upload_wan\\DezhChast\\";
+                File fileTo = new File(dezhchastFolderPath + task.getFilename());
+                fireCopyFile(fileFrom, fileTo, "ДЧ");
+            });
+            copyToUploadFolder.setOnAction(event1 -> {
+                String dezhchastFolderPath = "\\\\ftpres\\upload\\upload_wan\\DezhChast\\";
+                File fileTo = new File(dezhchastFolderPath + task.getFilename());
+                fireCopyFile(fileFrom, fileTo, "ДЧ");
+            });
+
+            copyToUploadFolder.setOnAction(event -> {
+                DirectoryChooser directoryChooser = new DirectoryChooser();
+                directoryChooser.setInitialDirectory(new File("\\\\ftpres\\upload\\upload_wan\\"));
+                File folderTo = directoryChooser.showDialog(stage);
+
+                if (folderTo != null) {
+                    System.out.println(folderTo);
+                    File fileTo = new File(folderTo + File.separator + task.getFilename());
+                    fireCopyFile(fileFrom, fileTo, " в " + folderTo.getName());
+                }
+            });
         }
     }
 
@@ -862,7 +1011,6 @@ public class WindowView implements View {
     }
 
     private void setLeftStatusLabel() {
-        HBox hBox = (HBox) vBox.lookup("#HBox");
         Label leftStatusLabel = (Label) hBox.lookup("#leftStatusLabel");
 
         System.setOut(new PrintStream(System.out) {
@@ -871,12 +1019,15 @@ public class WindowView implements View {
                 Platform.runLater(new Runnable() {
                     @Override
                     public void run() {
-//                        if (s != null)
-                            leftStatusLabel.setText(s.toString());
+                        leftStatusLabel.setText(s.toString());
                     }
                 });
                 super.println(s);
             }
         });
+    }
+
+    private void setRightStatusLabelText(String text) {
+        rightStatusLabel.setText(text);
     }
 }

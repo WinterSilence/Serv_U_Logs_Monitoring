@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.paint.*?>
-<?import javafx.scene.shape.*?>
-<?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ChoiceBox?>
@@ -26,7 +19,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="VBox" prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:id="VBox" prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1">
   <children>
     <MenuBar fx:id="menuBar" VBox.vgrow="NEVER">
       <menus>
@@ -111,7 +104,7 @@
         <AnchorPane fx:id="anchorPaneRecently">
           <children>
                   <Button fx:id="startButton" layoutX="30.0" layoutY="22.0" mnemonicParsing="false" style="-fx-text-fill: RED;" text="START" />
-                  <Button fx:id="FTPbutton" layoutX="129.0" layoutY="22.0" mnemonicParsing="false" style="-fx-text-fill: RED;" text="FTP" />
+                  <Button fx:id="FTPbutton" layoutX="80.0" layoutY="22.0" mnemonicParsing="false" style="-fx-text-fill: RED;" text="FTP" />
                   <Circle fx:id="startCircle" fill="#ff1f1f" layoutX="14.0" layoutY="35.0" radius="10.0" stroke="BLACK" strokeLineCap="ROUND" strokeType="INSIDE" strokeWidth="0.3" />
             <Label fx:id="details" alignment="CENTER" layoutX="10.0" layoutY="46.0" style="&#10;" text="Пришедшие файлы" textAlignment="CENTER" textFill="#9f9f9f" wrapText="false">
                      <font>
@@ -132,7 +125,7 @@
                         <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                      </columnResizePolicy>
                   </TableView>
-                  <Label fx:id="details1" alignment="CENTER" layoutX="10.0" layoutY="5.0" style="&#10;" text="\\\ftpres\f$\Serv-U.log" textAlignment="CENTER" wrapText="false">
+                  <Label fx:id="startButtonText" alignment="CENTER" layoutX="10.0" layoutY="5.0" style="&#10;" text="\\\ftpres\f$\Serv-U.log" textAlignment="CENTER" wrapText="false">
                      <font>
                         <Font size="10.0" fx:id="x12" />
                      </font>
@@ -140,25 +133,26 @@
                         <Color blue="0.624" green="0.624" red="0.624" fx:id="x22" />
                      </textFill>
                   </Label>
-                  <Button fx:id="checkHoursButton" layoutX="186.0" layoutY="22.0" mnemonicParsing="false" style="-fx-text-fill: RED;" text="Hours" />
-                  <Button fx:id="todayButton" layoutX="238.0" layoutY="22.0" mnemonicParsing="false" style="-fx-text-fill: RED;" text="Сегодня" />
-                  <Button fx:id="yesterdayButton" layoutX="299.0" layoutY="22.0" mnemonicParsing="false" style="-fx-text-fill: RED;" text="Вчера" />
-                  <Label fx:id="numberOfHours" layoutX="204.0" layoutY="7.0" text="48" textFill="#9f9f9f">
+                  <Button fx:id="checkHoursButton" layoutX="160.0" layoutY="22.0" mnemonicParsing="false" style="-fx-text-fill: RED;" text="Hours" />
+                  <Button fx:id="todayButton" layoutX="208.0" layoutY="22.0" mnemonicParsing="false" style="-fx-text-fill: RED;" text="Сегодня" />
+                  <Button fx:id="yesterdayButton" layoutX="268.0" layoutY="22.0" mnemonicParsing="false" style="-fx-text-fill: RED;" text="Вчера" />
+                  <Label fx:id="numberOfHours" layoutX="179.0" layoutY="7.0" text="48" textAlignment="CENTER" textFill="#9f9f9f">
                      <font>
                         <Font size="10.0" />
                      </font>
                   </Label>
-                  <Label fx:id="todayText" layoutX="247.0" layoutY="7.0" text="todayText" textFill="#9f9f9f" visible="false">
+                  <Label fx:id="todayButtonText" layoutX="227.0" layoutY="7.0" text="01.01" textAlignment="CENTER" textFill="#9f9f9f">
                      <font>
                         <Font size="10.0" />
                      </font>
                   </Label>
-                  <Label fx:id="numberOfHours2" layoutX="294.0" layoutY="7.0" text="yesterdayText" textFill="#9f9f9f" visible="false">
+                  <Label fx:id="yesterdayButtonText" layoutX="281.0" layoutY="7.0" text="01.01" textFill="#9f9f9f">
                      <font>
                         <Font size="10.0" />
                      </font>
                   </Label>
                   <ChoiceBox fx:id="recentlyTaskChoiceBox" layoutY="48.0" prefWidth="150.0" AnchorPane.rightAnchor="6.0" />
+                  <Button fx:id="stopButton" disable="true" layoutX="115.0" layoutY="22.0" mnemonicParsing="false" style="-fx-text-fill: RED;" text="STOP" />
           </children>
         </AnchorPane>
       </items>
@@ -174,7 +168,7 @@
           </textFill>
         </Label>
         <Pane prefHeight="-1.0" prefWidth="-1.0" HBox.hgrow="ALWAYS" />
-        <Label font="$x3" maxWidth="-1.0" text="Right status" textFill="$x4" HBox.hgrow="NEVER" />
+        <Label fx:id="rightStatusLabel" font="$x3" maxWidth="-1.0" text="Right status" textFill="$x4" HBox.hgrow="NEVER" />
       </children>
       <padding>
         <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />

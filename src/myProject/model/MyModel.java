@@ -12,10 +12,10 @@ import java.util.*;
 
 public class MyModel {
 
-    private Map<String, Session> allSessionsMap;
-    private List<Task> completedTasks;
-    private List<Task> uploadingTasks;
-    private List<Task> uncompletedTasks;
+    private Map<String, Session> allSessionsMap = new HashMap<>();
+    private List<Task> completedTasks = new ArrayList<>();
+    private List<Task> uploadingTasks = new ArrayList<>();
+    private List<Task> uncompletedTasks = new ArrayList<>();
 
     private OpenedFile openedFile = new OpenedFile();
 
@@ -34,6 +34,7 @@ public class MyModel {
         bannedLogins.add("quantelr");
         bannedLogins.add("kino");
         bannedLogins.add("kinopokaz-m24");
+        bannedLogins.add("m24-newsroom");
     }
 
     public void setTodayFullPath(String fullPath) {
@@ -230,7 +231,7 @@ public class MyModel {
 
 //                        }
                         } else {
-                            System.out.println("not exist - " + fileTask.getAbsolutePath());
+                            Helper.print("not exist - " + fileTask.getAbsolutePath());
                             task.setState(UploadState.ERROR_UPLOAD);
                         }
 //                        uploadingTasks.add(task);

@@ -6,6 +6,8 @@ import myProject.controller.FXMLController;
 import myProject.model.MyModel;
 import myProject.view.WindowView;
 
+import java.io.IOException;
+
 public class Start extends Application {
 
     public static void main(String[] args) {
@@ -13,12 +15,12 @@ public class Start extends Application {
     }
 
     @Override
-    public void start(Stage stage) throws Exception {
+    public void start(Stage stage) throws IOException {
         MyModel myModel = new MyModel();
         WindowView windowView = new WindowView(myModel);
         FXMLController fxmlController = new FXMLController(myModel);
         fxmlController.setView(windowView);
         windowView.setFxmlController(fxmlController);
-        windowView.startView(stage);
+        fxmlController.start(stage);
     }
 }

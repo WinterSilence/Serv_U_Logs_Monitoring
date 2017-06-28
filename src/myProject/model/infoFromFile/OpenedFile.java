@@ -30,7 +30,6 @@ public class OpenedFile {
                 lastLine = initMapByDate(todayFile);
                 initBytes = todayFile.length() - lastLine.length() - 2; // минус длина строки и перенос строки !!!
                 if (initBytes < 0) initBytes = 0;
-                System.out.println("TADA");
                 isOffline = false;
                 break;
             } catch (IOException ex) {
@@ -173,5 +172,4 @@ public class OpenedFile {
     public void setOffline() {
         isOffline = true;
     }
-
 }

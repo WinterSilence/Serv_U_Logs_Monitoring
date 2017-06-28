@@ -1,8 +1,8 @@
 package myProject;
 
 import java.io.*;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -124,7 +124,8 @@ public class Helper {
             }
         }
         try {
-            Files.copy(from.toPath(), to.toPath());
+            Files.copy(from.toPath(), to.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
         }

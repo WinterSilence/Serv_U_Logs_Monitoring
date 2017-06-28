@@ -24,6 +24,7 @@ public class FtpSource implements FileSource {
     private BooleanProperty copyExists = new SimpleBooleanProperty(false);
 
     private FTPClient ftpClient;
+    private boolean offline = true;
 
     public FtpSource() {
         try {
@@ -120,6 +121,7 @@ public class FtpSource implements FileSource {
             boolean success = downloadFromFTP(yesterdayFileFromFTP, folderFrom + File.separator + yesterdayFilename);
             if (success) {
                 makingCopy(yesterdayFileFromFTP, yesterdayFilename);
+                offline = false;
             }
         } catch (IOException ex) {
             Helper.print("IO Exception");
@@ -130,16 +132,7 @@ public class FtpSource implements FileSource {
             @Override
             public void run() {
                 try {
-                    while (true) {
-
-                        // TODO Может пригодиться
-/*                        for (FTPFile ftpfile : ftpClient.listFiles(folderFrom, new FTPFileFilter() {
-                            @Override
-                            public boolean accept(FTPFile file) {
-                                return file.getName().matches("\\d{4}_\\d{2}_\\d{2}\\.log");
-                            }
-                        })) {
-                        }*/
+                    while (!offline) {
                         File fileFromFTP = createLocalFile("fromFtp" + filename);
                         boolean success = downloadFromFTP(fileFromFTP, folderFrom + File.separator + filename);
 
@@ -156,6 +149,10 @@ public class FtpSource implements FileSource {
         });
         thread.setDaemon(true);
         thread.start();
+    }
+
+    public void stop() {
+        offline = true;
     }
 
     private File createLocalFile(String filename) throws IOException {
@@ -180,7 +177,7 @@ public class FtpSource implements FileSource {
         Helper.print("Making copy!");
         File fileCopy = createLocalFile(filename);
         fileCopy.deleteOnExit();
-        boolean copyExist =Helper.transferFile(fileFromFTP, fileCopy);
+        boolean copyExist = Helper.transferFile(fileFromFTP, fileCopy);
         Helper.print("Copy done!");
         return copyExist;
     }
