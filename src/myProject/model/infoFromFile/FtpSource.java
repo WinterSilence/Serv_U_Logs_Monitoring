@@ -137,7 +137,8 @@ public class FtpSource implements FileSource {
                         boolean success = downloadFromFTP(fileFromFTP, folderFrom + File.separator + filename);
 
                         if (success) {
-                            copyExists.set(makingCopy(fileFromFTP, filename));
+                            makingCopy(fileFromFTP, filename);
+                            copyExists.set(true);
                         }
                         Helper.pause(10);
                     }
@@ -171,14 +172,13 @@ public class FtpSource implements FileSource {
         return success;
     }
 
-    private boolean makingCopy(File fileFromFTP, String filename) throws IOException {
+    private void makingCopy(File fileFromFTP, String filename) throws IOException {
         Helper.print("File " + filename + " has been downloaded successfully.");
         System.out.println(fileFromFTP.getName());
         Helper.print("Making copy!");
         File fileCopy = createLocalFile(filename);
         fileCopy.deleteOnExit();
-        boolean copyExist = Helper.transferFile(fileFromFTP, fileCopy);
+        Helper.transferFile(fileFromFTP, fileCopy);
         Helper.print("Copy done!");
-        return copyExist;
     }
 }

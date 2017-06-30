@@ -115,7 +115,7 @@ public class Helper {
         return result;
     }
 
-    public static boolean transferFile(File from, File to) {
+    public static void transferFile(File from, File to) throws IOException {
         if (!from.exists()) {
             try {
                 from = Files.createFile(from.toPath()).toFile();
@@ -123,13 +123,7 @@ public class Helper {
                 log(ex);
             }
         }
-        try {
-            Files.copy(from.toPath(), to.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
+        Files.copy(from.toPath(), to.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
     public static void writeLog(String string) {

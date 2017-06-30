@@ -50,13 +50,13 @@ import myProject.model.infoFromFile.FileSourceFactory;
 import myProject.model.infoFromFile.FtpSource;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class WindowView implements View {
     //75008042017
@@ -96,7 +96,7 @@ public class WindowView implements View {
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170628";
+    private String title = "WorkProjectApp 20170630";
     private String selectedLogin = " All";
 
     private TableColumn<Task, ?> sortColumn = null;
@@ -354,17 +354,17 @@ public class WindowView implements View {
             dialog.setTitle("");
             dialog.setHeaderText("Enter FTP server: ");
             dialog.setGraphic(null);
-            Optional<String> result = dialog.showAndWait();
-            if (result.isPresent()) {
-                String ftpAddress = result.get().toLowerCase();
+            Optional<String> resultFtpDialog = dialog.showAndWait();
+            if (resultFtpDialog.isPresent()) {
+                String ftpAddress = resultFtpDialog.get().toLowerCase();
                 if (ftpAddress.startsWith("ftp:\\") || ftpAddress.startsWith("ftp:/")) {
                     ftpAddress = ftpAddress.replaceFirst("^(ftp)\\W+", "");
                 }
                 ftpAddress = ftpAddress.replaceAll("(\\\\|/)*$", "");
                 FtpSource ftpSource = FileSourceFactory.createFtpSource();
                 ftpSource.setFtpAddress(ftpAddress);
-
-                while (passwordDialog(ftpSource)) {
+                boolean result;
+                while ((result = passwordDialog(ftpSource))) {
                     if (ftpSource.connectToFtp()) {
                         if (ftpSource.loginOk()) {
                             ftpSource.start();
@@ -411,6 +411,19 @@ public class WindowView implements View {
                         }
                     }
                 });
+                if (!result) {
+                    startButtonText.setVisible(true);
+                    startButton.setDisable(false);
+                    FTPButton.setDisable(false);
+                    todayButton.setDisable(false);
+                    yesterdayButton.setDisable(false);
+                }
+            } else {
+                startButtonText.setVisible(true);
+                startButton.setDisable(false);
+                FTPButton.setDisable(false);
+                todayButton.setDisable(false);
+                yesterdayButton.setDisable(false);
             }
         });
     }
@@ -520,8 +533,6 @@ public class WindowView implements View {
             recentlyTaskChoiceBox.setItems(FXCollections.observableArrayList(recentFilesLogins));
         }
         resultTableRecentlyFiles = filterTaskListSelectedChoiceBox(resultTableRecentlyFiles);
-        resultTableRecentlyFiles = filterTaskListSameTasks(resultTableRecentlyFiles);
-
         resultTableRecentlyFiles.sort(new Comparator<Task>() {
             @Override
             public int compare(Task task1, Task task2) {
@@ -534,6 +545,7 @@ public class WindowView implements View {
                 return dateTask2.compareTo(dateTask1);
             }
         });
+        resultTableRecentlyFiles = filterTaskListSameTasks(resultTableRecentlyFiles);
 
         tableViewRecently.setItems(FXCollections.observableArrayList(resultTableRecentlyFiles));
         // Сортировка с жёсткой привязкой к отображению (нельзя изменить в окне)
@@ -617,26 +629,20 @@ public class WindowView implements View {
     }
 
     private List<Task> filterTaskListSameTasks(List<Task> list) {
+        List<Task> sortList = new ArrayList<>();
+        sortList.addAll(list);
         List<Task> result = new ArrayList<>();
-        result.addAll(list);
-        Iterator<Task> iterator = result.iterator();
-        while (iterator.hasNext()) {
-            Task currentTask = iterator.next();
-            for (Task task : list) {
-                if (!currentTask.equals(task)
-                        && currentTask.getFilename().equals(task.getFilename())
+
+        for (Task currentTask : list) {
+            Iterator<Task> iterator = sortList.iterator();
+            while (iterator.hasNext()) {
+                Task task = iterator.next();
+                if (currentTask.equals(task)) {
+                    result.add(currentTask);
+                } else if (currentTask.getFilename().equals(task.getFilename())
                         && currentTask.getLogin().equals(task.getLogin())
                         && currentTask.getFolder().equals(task.getFolder())) {
-                    Date dateTask1;
-                    Date dateTask2;
-                    if (currentTask.getTimeEnd() != null) dateTask1 = currentTask.getTimeEnd();
-                    else dateTask1 = currentTask.getTimeStart();
-                    if (task.getTimeEnd() != null) dateTask2 = task.getTimeEnd();
-                    else dateTask2 = task.getTimeStart();
-                    if (dateTask2.compareTo(dateTask1) > 0) {
-                        iterator.remove();
-                    }
-                    break;
+                    iterator.remove();
                 }
             }
         }
@@ -760,6 +766,7 @@ public class WindowView implements View {
         TableColumn<Task, String> recentlyFolderColumn =
                 (TableColumn<Task, String>) tableViewRecently.getColumns().get(6);
 
+
         sortColumn = recentlyEndColumn;
 
         tableViewRecently.setOnMousePressed(new EventHandler<MouseEvent>() {
@@ -825,7 +832,6 @@ public class WindowView implements View {
 
     private void contextMenuRecentlyUploadedFiles(TableCell tableCell) {
         ContextMenu contextMenu = new ContextMenu();
-        MenuItem openFolder = new MenuItem("Открыть папку с файлом");
         MenuItem inQuantel = new MenuItem("в Quantel");
         MenuItem inDalet = new MenuItem("в Dalet основной");
         MenuItem inDaletFFAStrans = new MenuItem("в Dalet FFAStrans");
@@ -835,9 +841,11 @@ public class WindowView implements View {
         MenuItem copyToCulture = new MenuItem("в ТК Культура");
         MenuItem copyToDezhchast = new MenuItem("в ДЧ");
         MenuItem copyToUploadFolder = new MenuItem("Выберете папку ->");
+        MenuItem openFolder = new MenuItem("Открыть папку с файлом");
 
-        contextMenu.getItems().addAll(inQuantel, inDalet, inDaletFFAStrans, inDaletReserv, openFolder,
-                quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToCulture, copyToDezhchast, copyToUploadFolder);
+
+        contextMenu.getItems().addAll(inQuantel, inDalet, inDaletFFAStrans, inDaletReserv,
+                quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToCulture, copyToDezhchast, copyToUploadFolder, openFolder);
         tableCell.setContextMenu(contextMenu);
         Task task = (Task) tableCell.getTableRow().getItem();
         if (task != null) {
@@ -845,14 +853,6 @@ public class WindowView implements View {
             String pathToFolder = Helper.renameFolder(folderFile.getAbsolutePath().toLowerCase());
 
             File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
-
-            openFolder.setOnAction(event1 -> {
-                try {
-                    Desktop.getDesktop().open(new File(pathToFolder));
-                } catch (IOException ex) {
-                    Helper.log(ex);
-                }
-            });
 
             inQuantel.setOnAction(event1 -> {
                 String quantelFolderPath = "\\\\ftpres\\quantel$\\";
@@ -942,6 +942,14 @@ public class WindowView implements View {
                     fireCopyFile(fileFrom, fileTo, " в " + folderTo.getName());
                 }
             });
+
+            openFolder.setOnAction(event1 -> {
+                try {
+                    Desktop.getDesktop().open(new File(pathToFolder));
+                } catch (IOException ex) {
+                    Helper.log(ex);
+                }
+            });
         }
     }
 
@@ -951,14 +959,38 @@ public class WindowView implements View {
         Thread copyThread = new Thread(new Runnable() {
             @Override
             public void run() {
-
-                boolean complete = Helper.transferFile(fileFrom, fileTo);
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        booleanPropertyTransferComplete.set(complete);
-                    }
-                });
+                try {
+                    Helper.transferFile(fileFrom, fileTo);
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            booleanPropertyTransferComplete.set(true);
+                        }
+                    });
+                } catch (FileSystemException ex) {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setHeaderText("");
+                            alert.setGraphic(null);
+                            alert.setContentText(ex.getReason());
+                            alert.initModality(Modality.NONE);
+                            Timeline idleStage = new Timeline(new KeyFrame(Duration.seconds(10), new EventHandler<ActionEvent>() {
+                                @Override
+                                public void handle(ActionEvent event) {
+                                    alert.setResult(ButtonType.CANCEL);
+                                    alert.hide();
+                                }
+                            }));
+                            idleStage.setCycleCount(1);
+                            idleStage.play();
+                            alert.showAndWait();
+                        }
+                    });
+                } catch (IOException ioex) {
+                    Helper.log(ioex);
+                }
             }
         });
         copyThread.start();
@@ -967,8 +999,9 @@ public class WindowView implements View {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                 if (newValue) {
-                    Alert alert = new Alert(Alert.AlertType.NONE);
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
                     alert.setHeaderText("");
+                    alert.setTitle(fileTo.getName());
                     alert.setGraphic(null);
                     alert.setContentText("Файл " + fileTo.getName() + " скопирован в " + text);
                     alert.initModality(Modality.NONE);
@@ -1008,6 +1041,174 @@ public class WindowView implements View {
 
         uploadingFolderColumn.setCellValueFactory(new PropertyValueFactory<>("folder"));
         uploadingFolderColumn.setStyle("-fx-alignment: CENTER;");
+
+        tableViewUploading.setOnMousePressed(new EventHandler<MouseEvent>() {
+            public void handle(MouseEvent event) {
+                if (event.isSecondaryButtonDown()) {
+                    Helper.print("Right Button Clicked in tableViewUploading");
+
+                    EventTarget eventTarget = event.getTarget();
+                    TableCell tableCell = null;
+                    if (eventTarget instanceof TableCell) {
+                        tableCell = (TableCell) eventTarget;
+                    } else if (eventTarget instanceof Text) {
+                        tableCell = (TableCell) ((Text) eventTarget).getParent();
+                    }
+                    if (tableCell != null) {
+                        contextMenuUploadingFiles(tableCell);
+                    }
+                }
+            }
+        });
+    }
+
+    private void contextMenuUploadingFiles(TableCell tableCell) {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem inQuantel = new MenuItem("в Quantel по прибытию");
+        MenuItem inDalet = new MenuItem("в Dalet основной по прибытию");
+        MenuItem quantelNaPryamkiPC1 = new MenuItem("в Quantel на PC1 по прибытию");
+        MenuItem quantelNaPryamkiPC2 = new MenuItem("в Quantel на PC2 по прибытию");
+        MenuItem copyToCulture = new MenuItem("в ТК Культура по прибытию");
+        MenuItem copyToDezhchast = new MenuItem("в ДЧ по прибытию");
+        MenuItem copyToUploadFolder = new MenuItem("Выберете папку для копирования по прибытию:");
+        MenuItem openFolder = new MenuItem("Открыть папку с файлом");
+
+
+        contextMenu.getItems().addAll(inQuantel, inDalet,
+                quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToCulture, copyToDezhchast, copyToUploadFolder, openFolder);
+        tableCell.setContextMenu(contextMenu);
+        Task task = (Task) tableCell.getTableRow().getItem();
+        if (task != null) {
+            File folderFile = task.getUnitFile().getFile().getParentFile();
+            String pathToFolder = Helper.renameFolder(folderFile.getAbsolutePath().toLowerCase());
+
+            File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
+            inQuantel.setOnAction(event1 -> {
+                String quantelFolderPath = "\\\\ftpres\\quantel$\\";
+                File fileTo = new File(quantelFolderPath + Helper.renameFromCirrilic(task.getFilename()));
+                fireCopyFileOnComplete(fileFrom, fileTo, "Quantel");
+            });
+
+            inDalet.setOnAction(event1 -> {
+                String rikrzFolderPath = "\\\\rikrz\\dalet-in\\";
+                File fileTo = new File(rikrzFolderPath + Helper.renameFromCirrilic(task.getFilename()));
+                fireCopyFileOnComplete(fileFrom, fileTo, "Dalet основной");
+            });
+
+            quantelNaPryamkiPC1.setOnAction(event1 -> {
+                String PC1Address = "\\\\172.18.0.184\\d$\\";
+                String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
+                File currDateFolder = new File(PC1Address + currDateFolderPath);
+                if (!currDateFolder.exists()) {
+                    try {
+                        Files.createDirectories(currDateFolder.toPath());
+                    } catch (IOException ex) {
+                        Helper.log(ex);
+                    }
+                }
+
+                File fileTo = new File(currDateFolder.getAbsolutePath() + File.separator
+                        + task.getFilename());
+                Helper.print(fileTo);
+                fireCopyFileOnComplete(fileFrom, fileTo, "на PC1");
+
+            });
+
+            quantelNaPryamkiPC2.setOnAction(event1 -> {
+                String PC2Address = "\\\\172.18.0.183\\d$\\";
+                String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
+                File currDateFolder = new File(PC2Address + currDateFolderPath);
+                if (!currDateFolder.exists()) {
+                    try {
+                        Files.createDirectories(currDateFolder.toPath());
+                    } catch (IOException ex) {
+                        Helper.log(ex);
+                    }
+                }
+
+                File fileTo = new File(currDateFolder.getAbsolutePath() + File.separator
+                        + task.getFilename());
+                Helper.print(fileTo);
+                fireCopyFileOnComplete(fileFrom, fileTo, "на PC2");
+            });
+
+            copyToCulture.setOnAction(event1 -> {
+                String cultureFolderPath = "\\\\ftpres\\culture$\\";
+                File fileTo = new File(cultureFolderPath + Helper.renameFromCirrilic(task.getFilename()));
+                fireCopyFileOnComplete(fileFrom, fileTo, "Культуру");
+            });
+            copyToDezhchast.setOnAction(event1 -> {
+                String dezhchastFolderPath = "\\\\ftpres\\upload\\upload_wan\\DezhChast\\";
+                File fileTo = new File(dezhchastFolderPath + task.getFilename());
+                fireCopyFileOnComplete(fileFrom, fileTo, "ДЧ");
+            });
+            copyToUploadFolder.setOnAction(event1 -> {
+                String dezhchastFolderPath = "\\\\ftpres\\upload\\upload_wan\\DezhChast\\";
+                File fileTo = new File(dezhchastFolderPath + task.getFilename());
+                fireCopyFileOnComplete(fileFrom, fileTo, "ДЧ");
+            });
+
+            copyToUploadFolder.setOnAction(event -> {
+                DirectoryChooser directoryChooser = new DirectoryChooser();
+                directoryChooser.setInitialDirectory(new File("\\\\ftpres\\upload\\upload_wan\\"));
+                File folderTo = directoryChooser.showDialog(stage);
+
+                if (folderTo != null) {
+                    System.out.println(folderTo);
+                    File fileTo = new File(folderTo + File.separator + task.getFilename());
+                    fireCopyFileOnComplete(fileFrom, fileTo, " в " + folderTo.getName());
+                }
+            });
+
+            openFolder.setOnAction(event1 -> {
+                try {
+                    Desktop.getDesktop().open(new File(pathToFolder));
+                } catch (IOException ex) {
+                    Helper.log(ex);
+                }
+            });
+        }
+    }
+
+    private Map<File, Set<ControlUploadProcess>> mapOfProcesses = new ConcurrentHashMap<>();
+
+    private void fireCopyFileOnComplete(File fileFrom, File fileTo, String text) {
+        if (fileFrom.exists()) {
+            Thread waitForEndUploadThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Set<ControlUploadProcess> setOfProcesses;
+                    if (!mapOfProcesses.containsKey(fileFrom)) {
+                        setOfProcesses = new HashSet<>();
+                    } else {
+                        setOfProcesses = mapOfProcesses.get(fileFrom);
+                    }
+                    setOfProcesses = Collections.synchronizedSet(setOfProcesses);
+                    ControlUploadProcess controlUploadProcess = new ControlUploadProcess();
+                    controlUploadProcess.setFile(fileFrom);
+                    controlUploadProcess.setProcess(text);
+                    setOfProcesses.add(controlUploadProcess);
+                    mapOfProcesses.put(fileFrom, setOfProcesses);
+                    System.out.println("SetOfProcesses size - " + setOfProcesses.size());
+                    boolean running = true;
+                    while (running) {
+                        try (BufferedInputStream reader = new BufferedInputStream(new FileInputStream(fileFrom))) {
+                            running = false;
+                        } catch (FileNotFoundException ex) {
+                            // wait for file accessible
+                        } catch (IOException ioException) {
+                            Helper.log(ioException);
+                        }
+                        Helper.pause(5);
+                    }
+                    fireCopyFile(fileFrom, fileTo, text);
+                    setOfProcesses.remove(controlUploadProcess);
+                    if (setOfProcesses.size() == 0) mapOfProcesses.remove(fileFrom);
+                    System.out.println("MapOfProcesses size - " + mapOfProcesses.size());
+                }
+            });
+            waitForEndUploadThread.start();
+        }
     }
 
     private void setLeftStatusLabel() {
@@ -1029,5 +1230,26 @@ public class WindowView implements View {
 
     private void setRightStatusLabelText(String text) {
         rightStatusLabel.setText(text);
+    }
+
+    private class ControlUploadProcess {
+        private File file;
+        private String process;
+
+        public File getFile() {
+            return file;
+        }
+
+        public void setFile(File file) {
+            this.file = file;
+        }
+
+        public String getProcess() {
+            return process;
+        }
+
+        public void setProcess(String process) {
+            this.process = process;
+        }
     }
 }
