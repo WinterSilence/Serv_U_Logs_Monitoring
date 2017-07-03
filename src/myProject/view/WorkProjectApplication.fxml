@@ -83,6 +83,14 @@
                         <Color blue="0.624" green="0.624" red="0.624" fx:id="x21" />
                      </textFill>
                   </Label>
+                  <Label fx:id="copyAfterPopup" alignment="CENTER" layoutX="241.0" layoutY="48.0" style="&#10;" text="Empty" textAlignment="CENTER" visible="false" wrapText="false" AnchorPane.rightAnchor="5.0">
+                     <font>
+                        <Font size="18.0" fx:id="x111" />
+                     </font>
+                     <textFill>
+                        <Color blue="0.624" green="0.624" red="0.624" fx:id="x211" />
+                     </textFill>
+                  </Label>
                   <TableView fx:id="uploadingFiles" layoutX="6.0" layoutY="75.0" prefHeight="512.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="75.0">
                      <columns>
                         <TableColumn fx:id="uploadingTimeStartColumn" editable="false" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" sortType="DESCENDING" text="Start" />
