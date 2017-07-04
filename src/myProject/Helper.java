@@ -124,6 +124,7 @@ public class Helper {
             }
         }
         Files.copy(from.toPath(), to.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        to.setLastModified(new Date().getTime());
     }
 
     public static void writeLog(String string) {

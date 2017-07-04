@@ -90,13 +90,14 @@ public class WindowView implements View {
     private Label startButtonText;
     private Label todayButtonText;
     private Label yesterdayButtonText;
+    private Label copyAfterInfoLabel;
 
     private Label rightStatusLabel;
 
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170630";
+    private String title = "WorkProjectApp 20170704";
     private String selectedLogin = " All";
 
     private TableColumn<Task, ?> sortColumn = null;
@@ -140,6 +141,7 @@ public class WindowView implements View {
         setTodayButtonText();
         setYesterdayButtonText();
         setOfflineProperty();
+        setCopyAfterInfoLabel();
     }
 
     private void init() {
@@ -158,6 +160,9 @@ public class WindowView implements View {
         FTPButton = (Button) anchorPaneRecently.lookup("#FTPbutton");
         todayButton = (Button) anchorPaneRecently.lookup("#todayButton");
         yesterdayButton = (Button) anchorPaneRecently.lookup("#yesterdayButton");
+
+        recentlyTaskChoiceBox = (ChoiceBox<String>) splitPane.lookup("#recentlyTaskChoiceBox");
+        copyAfterInfoLabel = (Label) splitPane.lookup("#copyAfterInfoLabel");
 
         currentDate = new SimpleStringProperty(simpleDateFormat.format(new Date()));
         yesterdayDate = new SimpleStringProperty(simpleDateFormat.format(Helper.yesterday()));
@@ -178,8 +183,6 @@ public class WindowView implements View {
 
         startButtonText = (Label) anchorPaneRecently.lookup("#startButtonText");
         rightStatusLabel = (Label) hBox.lookup("#rightStatusLabel");
-
-        recentlyTaskChoiceBox = (ChoiceBox<String>) splitPane.lookup("#recentlyTaskChoiceBox");
 
         showOnlineSessions();
         showRecentlyUploadedFiles();
@@ -513,7 +516,7 @@ public class WindowView implements View {
     private TreeSet<String> recentFilesLogins = new TreeSet<>();
 
     private void setTableViewRecently() {
-        List<Task> resultTableRecentlyFiles = filterTaskListHours(myModel.getCompletedTasks());
+        List<Task> resultTableRecentlyFiles = filterTaskListHours(myModel.getCompletedTasks());  // todo Concurrent
 
         resultTableRecentlyFiles.addAll(filterTaskListHours(myModel.getUncompletedTasks()));
 
@@ -523,8 +526,9 @@ public class WindowView implements View {
             if (task.getFolder().endsWith("upload_wan\\DezhChast")) {
                 recentFilesLoginUpdate.add("Dezhchast");
             }
-            if (task.getFolder().endsWith("obmen-utro\\for_moscow\\") || task.getFolder().endsWith("obmen-utro\\for_moscow\\Vesti_utro")) {
-                recentFilesLoginUpdate.add("Obmen-utro");
+
+            if (task.getFolder().endsWith("obmen-utro\\for_moscow\\Vesti_utro")) {
+                recentFilesLoginUpdate.add("Utro-obmen");
             }
 
         }
@@ -533,12 +537,15 @@ public class WindowView implements View {
         if (recentFilesLogins.size() == 0) {
             recentFilesLogins.addAll(recentFilesLoginUpdate);
             recentlyTaskChoiceBox.setItems(FXCollections.observableArrayList(recentFilesLogins));
+            recentlyTaskChoiceBox.setValue(" All");
         }
 
         if (!recentFilesLogins.equals(recentFilesLoginUpdate)) {
             recentFilesLogins = recentFilesLoginUpdate;
             recentlyTaskChoiceBox.setItems(FXCollections.observableArrayList(recentFilesLogins));
+            recentlyTaskChoiceBox.setValue(selectedLogin);
         }
+
         resultTableRecentlyFiles = filterTaskListSelectedChoiceBox(resultTableRecentlyFiles);
         resultTableRecentlyFiles.sort(new Comparator<Task>() {
             @Override
@@ -618,13 +625,12 @@ public class WindowView implements View {
             }
             return result;
         }
-        if (selectedLogin.equals("Obmen-utro")) {
+        if (selectedLogin.equals("Utro-obmen")) {
             for (Task task : list) {
-                if (task.getFolder().endsWith("upload_wan\\DezhChast") || task.getFolder().endsWith("obmen-utro\\for_moscow\\Vesti_utro")) {
+                if (task.getFolder().endsWith("obmen-utro\\for_moscow\\Vesti_utro")) {
                     result.add(task);
                 }
             }
-            return result;
         }
         for (Task task : list) {
             if (task.getLogin().equals(selectedLogin)) {
@@ -674,7 +680,7 @@ public class WindowView implements View {
 
     private void setTableViewOnline() {
         List<Session> resultListOnlineSessions = new ArrayList<>();
-        for (Session session : myModel.getOnlineSessionsMap().values()) {
+        for (Session session : myModel.getOnlineSessionsMap().values()) {  // todo Concurrent
             if (!session.isEmpty()) {
                 for (Task task : session.getTasks()) {
                     if (task.getState() == UploadState.START_UPLOAD) {
@@ -825,11 +831,11 @@ public class WindowView implements View {
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 if (newValue != null) {
                     selectedLogin = newValue;
+                    update();
                 }
-                recentlyTaskChoiceBox.getSelectionModel().select(selectedLogin);
-                update();
             }
         });
+
 
         recentlyEndColumn.setCellValueFactory(new PropertyValueFactory<>("timeEndToString"));
         recentlyEndColumn.setStyle("-fx-alignment: CENTER;");
@@ -863,12 +869,13 @@ public class WindowView implements View {
         MenuItem quantelNaPryamkiPC2 = new MenuItem("в Quantel на PC2");
         MenuItem copyToCulture = new MenuItem("в ТК Культура");
         MenuItem copyToDezhchast = new MenuItem("в ДЧ");
+        MenuItem copyToObmenUtro = new MenuItem("ДУРам");
         MenuItem copyToUploadFolder = new MenuItem("Выберете папку ->");
         MenuItem openFolder = new MenuItem("Открыть папку с файлом");
 
 
         contextMenu.getItems().addAll(inQuantel, inDalet, inDaletFFAStrans, inDaletReserv,
-                quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToCulture, copyToDezhchast, copyToUploadFolder, openFolder);
+                quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToCulture, copyToDezhchast, copyToObmenUtro, copyToUploadFolder, openFolder);
         tableCell.setContextMenu(contextMenu);
         Task task = (Task) tableCell.getTableRow().getItem();
         if (task != null) {
@@ -880,25 +887,25 @@ public class WindowView implements View {
             inQuantel.setOnAction(event1 -> {
                 String quantelFolderPath = "\\\\ftpres\\quantel$\\";
                 File fileTo = new File(quantelFolderPath + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFile(fileFrom, fileTo, "Quantel");
+                fireCopyFile(fileFrom, fileTo, "в Quantel");
             });
 
             inDalet.setOnAction(event1 -> {
                 String rikrzFolderPath = "\\\\rikrz\\dalet-in\\";
                 File fileTo = new File(rikrzFolderPath + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFile(fileFrom, fileTo, "Dalet основной");
+                fireCopyFile(fileFrom, fileTo, "в Dalet основной");
             });
 
             inDaletFFAStrans.setOnAction(event1 -> {
                 String rikrzFFAStrans = "\\\\rikrz\\WF-RIK\\";
                 File fileTo = new File(rikrzFFAStrans + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFile(fileFrom, fileTo, "Dalet FFAStrans");
+                fireCopyFile(fileFrom, fileTo, "в Dalet FFAStrans");
             });
 
             inDaletReserv.setOnAction(event1 -> {
                 String rikrzReserv = "\\\\172.27.68.118\\storages\\CARBONCODER\\IN_FTP\\";
                 File fileTo = new File(rikrzReserv + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFile(fileFrom, fileTo, "Dalet Резерв");
+                fireCopyFile(fileFrom, fileTo, "в Dalet Резерв");
             });
 
             quantelNaPryamkiPC1.setOnAction(event1 -> {
@@ -941,17 +948,18 @@ public class WindowView implements View {
             copyToCulture.setOnAction(event1 -> {
                 String cultureFolderPath = "\\\\ftpres\\culture$\\";
                 File fileTo = new File(cultureFolderPath + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFile(fileFrom, fileTo, "Культуру");
+                fireCopyFile(fileFrom, fileTo, "в Культуру");
             });
             copyToDezhchast.setOnAction(event1 -> {
                 String dezhchastFolderPath = "\\\\ftpres\\upload\\upload_wan\\DezhChast\\";
                 File fileTo = new File(dezhchastFolderPath + task.getFilename());
-                fireCopyFile(fileFrom, fileTo, "ДЧ");
+                fireCopyFile(fileFrom, fileTo, "в ДЧ");
             });
-            copyToUploadFolder.setOnAction(event1 -> {
-                String dezhchastFolderPath = "\\\\ftpres\\upload\\upload_wan\\DezhChast\\";
-                File fileTo = new File(dezhchastFolderPath + task.getFilename());
-                fireCopyFile(fileFrom, fileTo, "ДЧ");
+
+            copyToObmenUtro.setOnAction(event1 -> {
+                String obmenUtroFolderPath = "\\\\ftpres\\obmen-utro$\\for_moscow\\";
+                File fileTo = new File(obmenUtroFolderPath + task.getFilename());
+                fireCopyFile(fileFrom, fileTo, "ДУРам");
             });
 
             copyToUploadFolder.setOnAction(event -> {
@@ -1026,7 +1034,7 @@ public class WindowView implements View {
                     alert.setHeaderText("");
                     alert.setTitle(fileTo.getName());
                     alert.setGraphic(null);
-                    alert.setContentText("Файл " + fileTo.getName() + " скопирован в " + text);
+                    alert.setContentText("Файл " + fileTo.getName() + " скопирован " + text);
                     alert.initModality(Modality.NONE);
                     Timeline idleStage = new Timeline(new KeyFrame(Duration.seconds(10), new EventHandler<ActionEvent>() {
                         @Override
@@ -1096,7 +1104,6 @@ public class WindowView implements View {
         MenuItem copyToUploadFolder = new MenuItem("Выберете папку для копирования по прибытию:");
         MenuItem openFolder = new MenuItem("Открыть папку с файлом");
 
-
         contextMenu.getItems().addAll(inQuantel, inDalet,
                 quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToCulture, copyToDezhchast, copyToUploadFolder, openFolder);
         tableCell.setContextMenu(contextMenu);
@@ -1109,13 +1116,13 @@ public class WindowView implements View {
             inQuantel.setOnAction(event1 -> {
                 String quantelFolderPath = "\\\\ftpres\\quantel$\\";
                 File fileTo = new File(quantelFolderPath + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFileOnComplete(fileFrom, fileTo, "Quantel");
+                fireCopyFileOnComplete(fileFrom, fileTo, "в Quantel");
             });
 
             inDalet.setOnAction(event1 -> {
                 String rikrzFolderPath = "\\\\rikrz\\dalet-in\\";
                 File fileTo = new File(rikrzFolderPath + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFileOnComplete(fileFrom, fileTo, "Dalet основной");
+                fireCopyFileOnComplete(fileFrom, fileTo, "в Dalet основной");
             });
 
             quantelNaPryamkiPC1.setOnAction(event1 -> {
@@ -1158,17 +1165,12 @@ public class WindowView implements View {
             copyToCulture.setOnAction(event1 -> {
                 String cultureFolderPath = "\\\\ftpres\\culture$\\";
                 File fileTo = new File(cultureFolderPath + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFileOnComplete(fileFrom, fileTo, "Культуру");
+                fireCopyFileOnComplete(fileFrom, fileTo, "в Культуру");
             });
             copyToDezhchast.setOnAction(event1 -> {
                 String dezhchastFolderPath = "\\\\ftpres\\upload\\upload_wan\\DezhChast\\";
                 File fileTo = new File(dezhchastFolderPath + task.getFilename());
-                fireCopyFileOnComplete(fileFrom, fileTo, "ДЧ");
-            });
-            copyToUploadFolder.setOnAction(event1 -> {
-                String dezhchastFolderPath = "\\\\ftpres\\upload\\upload_wan\\DezhChast\\";
-                File fileTo = new File(dezhchastFolderPath + task.getFilename());
-                fireCopyFileOnComplete(fileFrom, fileTo, "ДЧ");
+                fireCopyFileOnComplete(fileFrom, fileTo, "в ДЧ");
             });
 
             copyToUploadFolder.setOnAction(event -> {
@@ -1179,7 +1181,7 @@ public class WindowView implements View {
                 if (folderTo != null) {
                     System.out.println(folderTo);
                     File fileTo = new File(folderTo + File.separator + task.getFilename());
-                    fireCopyFileOnComplete(fileFrom, fileTo, " в " + folderTo.getName());
+                    fireCopyFileOnComplete(fileFrom, fileTo, "в " + folderTo);
                 }
             });
 
@@ -1215,6 +1217,17 @@ public class WindowView implements View {
                     System.out.println("SetOfProcesses size - " + setOfProcesses.size());
                     boolean running = true;
                     while (running) {
+                        Platform.runLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                int count = 0;
+                                for (Set<ControlUploadProcess> setOfCup : mapOfProcesses.values()) {
+                                    count = count + setOfCup.size();
+                                }
+                                copyAfterInfoLabel.setText(String.valueOf(count));
+                                copyAfterInfoLabel.setVisible(true);
+                            }
+                        });
                         try (BufferedInputStream reader = new BufferedInputStream(new FileInputStream(fileFrom))) {
                             running = false;
                         } catch (FileNotFoundException ex) {
@@ -1226,12 +1239,57 @@ public class WindowView implements View {
                     }
                     fireCopyFile(fileFrom, fileTo, text);
                     setOfProcesses.remove(controlUploadProcess);
-                    if (setOfProcesses.size() == 0) mapOfProcesses.remove(fileFrom);
+                    if (setOfProcesses.size() == 0) {
+                        mapOfProcesses.remove(fileFrom);
+                    }
+
                     System.out.println("MapOfProcesses size - " + mapOfProcesses.size());
+                    if (mapOfProcesses.size() == 0) {
+                        Platform.runLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                copyAfterInfoLabel.setVisible(false);
+                            }
+                        });
+
+                    }
+
                 }
             });
             waitForEndUploadThread.start();
         }
+    }
+
+    private void setCopyAfterInfoLabel() {
+        copyAfterInfoLabel.setOnMousePressed(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                if (event.isPrimaryButtonDown()) {
+                    Helper.print("Left Button Clicked");
+
+                    Dialog<Pair<String, String>> dialog = new Dialog<>();
+                    dialog.setTitle("Ожидают окончания загрузки");
+                    dialog.setHeaderText("");
+
+                    GridPane grid = new GridPane();
+                    grid.setHgap(10);
+                    grid.setVgap(10);
+                    grid.setPadding(new Insets(20, 150, 10, 10));
+
+                    int rowIndex = 0;
+                    for (Set<ControlUploadProcess> setOfCups : mapOfProcesses.values()) {
+                        for (ControlUploadProcess cup : setOfCups) {
+                            grid.add(new Label("Файл " + cup.getFile().getName() + " будет скопирован "
+                                    + cup.getProcess() + " после окончания загрузки"), 0, rowIndex++);
+                        }
+                    }
+                    dialog.getDialogPane().setContent(grid);
+                    dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
+
+                    dialog.showAndWait();
+                }
+            }
+        });
     }
 
     private void setLeftStatusLabel() {
