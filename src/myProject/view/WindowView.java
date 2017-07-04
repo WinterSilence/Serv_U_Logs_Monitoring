@@ -520,6 +520,13 @@ public class WindowView implements View {
         TreeSet<String> recentFilesLoginUpdate = new TreeSet<>();
         for (Task task : resultTableRecentlyFiles) {
             recentFilesLoginUpdate.add(task.getLogin());
+            if (task.getFolder().endsWith("upload_wan\\DezhChast")) {
+                recentFilesLoginUpdate.add("Dezhchast");
+            }
+            if (task.getFolder().endsWith("obmen-utro\\for_moscow\\") || task.getFolder().endsWith("obmen-utro\\for_moscow\\Vesti_utro")) {
+                recentFilesLoginUpdate.add("Obmen-utro");
+            }
+
         }
         recentFilesLoginUpdate.add(" All");
 
@@ -603,6 +610,22 @@ public class WindowView implements View {
     private List<Task> filterTaskListSelectedChoiceBox(List<Task> list) {
         if (selectedLogin.equals(" All")) return list;
         List<Task> result = new ArrayList<>();
+        if (selectedLogin.equals("Dezhchast")) {
+            for (Task task : list) {
+                if (task.getFolder().endsWith("upload_wan\\DezhChast")) {
+                    result.add(task);
+                }
+            }
+            return result;
+        }
+        if (selectedLogin.equals("Obmen-utro")) {
+            for (Task task : list) {
+                if (task.getFolder().endsWith("upload_wan\\DezhChast") || task.getFolder().endsWith("obmen-utro\\for_moscow\\Vesti_utro")) {
+                    result.add(task);
+                }
+            }
+            return result;
+        }
         for (Task task : list) {
             if (task.getLogin().equals(selectedLogin)) {
                 result.add(task);
