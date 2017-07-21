@@ -86,21 +86,20 @@ public class WindowView implements View {
     private Button todayButton;
     private Button yesterdayButton;
 
-
     private Label startButtonText;
     private Label todayButtonText;
     private Label yesterdayButtonText;
     private Label copyAfterInfoLabel;
-
     private Label rightStatusLabel;
 
+    private TextField searchTextField;
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170704";
+    private String title = "WorkProjectApp 20170721";
     private String selectedLogin = " All";
+    private String searchText = "";
 
-    private TableColumn<Task, ?> sortColumn = null;
     private StringProperty currentDate;
     private StringProperty yesterdayDate;
 
@@ -140,6 +139,7 @@ public class WindowView implements View {
         setYesterdayButton();
         setTodayButtonText();
         setYesterdayButtonText();
+        setSearchTextField();
         setOfflineProperty();
         setCopyAfterInfoLabel();
     }
@@ -160,6 +160,7 @@ public class WindowView implements View {
         FTPButton = (Button) anchorPaneRecently.lookup("#FTPbutton");
         todayButton = (Button) anchorPaneRecently.lookup("#todayButton");
         yesterdayButton = (Button) anchorPaneRecently.lookup("#yesterdayButton");
+        searchTextField = (TextField) anchorPaneRecently.lookup("#searchTextField");
 
         recentlyTaskChoiceBox = (ChoiceBox<String>) splitPane.lookup("#recentlyTaskChoiceBox");
         copyAfterInfoLabel = (Label) splitPane.lookup("#copyAfterInfoLabel");
@@ -185,8 +186,8 @@ public class WindowView implements View {
         rightStatusLabel = (Label) hBox.lookup("#rightStatusLabel");
 
         showOnlineSessions();
-        showRecentlyUploadedFiles();
         showUploadingFiles();
+        showRecentlyUploadedFiles();
     }
 
     private void setOfflineProperty() {
@@ -216,6 +217,13 @@ public class WindowView implements View {
     private void setYesterdayButtonText() {
         yesterdayButtonText = (Label) anchorPaneRecently.lookup("#yesterdayButtonText");
         yesterdayButtonText.setText(yesterdayDate.getValue());
+    }
+
+    private void setSearchTextField() {
+        searchTextField.setOnKeyReleased(event -> {
+            searchText = searchTextField.getText();
+            setTableViewRecently();
+        });
     }
 
     private void setHideShowSessionTable() {
@@ -560,8 +568,8 @@ public class WindowView implements View {
             }
         });
         resultTableRecentlyFiles = filterTaskListSameTasks(resultTableRecentlyFiles);
+        resultTableRecentlyFiles = filterTaskListSearchText(resultTableRecentlyFiles);
 
-        tableViewRecently.setItems(FXCollections.observableArrayList(resultTableRecentlyFiles));
         // Сортировка с жёсткой привязкой к отображению (нельзя изменить в окне)
 /*
         if (sortColumn != null) {
@@ -604,13 +612,55 @@ public class WindowView implements View {
                                     ((TableCell) node).setTextFill(Color.BLACK);
                                 }
                             }
-
                         }
                         super.updateItem(task, empty);
                     }
                 };
             }
         });
+
+        // Bugged, maybe later
+/*
+        TableColumn<Task, String> recentlyFilenameColumn =
+                (TableColumn<Task, String>) tableViewRecently.getColumns().get(1);
+        recentlyFilenameColumn.setCellFactory(new Callback<TableColumn<Task, String>, TableCell<Task, String>>() {
+            @Override
+            public TableCell<Task, String> call(TableColumn<Task, String> param) {
+                return new TableCell<Task, String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (item == null || empty) {
+                            setGraphic(null);
+                            setText(null);
+                            setStyle("");
+                        } else {
+
+                            setGraphic(null);
+                            if (!searchText.equals("") && item.toLowerCase().contains(searchText.toLowerCase())) {
+                                Text text1 = new Text(item);
+                                Text text2 = new Text(" -111");
+                                TextFlow buildTextFlow = new TextFlow(text1, text2);
+                                buildTextFlow.setTextAlignment(TextAlignment.CENTER);
+                                buildTextFlow.setPrefWidth(Region.USE_PREF_SIZE);
+                                buildTextFlow.setPrefHeight(Region.USE_PREF_SIZE);
+                                setGraphic(buildTextFlow);
+                                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                            } else {
+                                setText(item);
+                                setTextFill(Color.BLACK);
+                                setStyle("");
+                                setContentDisplay(ContentDisplay.TEXT_ONLY);
+                            }
+                        }
+                    }
+                };
+            }
+        });
+*/
+
+        tableViewRecently.setItems(FXCollections.observableArrayList(resultTableRecentlyFiles));
+
         setRightStatusLabelText("Size - " + resultTableRecentlyFiles.size());
     }
 
@@ -678,6 +728,17 @@ public class WindowView implements View {
         return result;
     }
 
+    private List<Task> filterTaskListSearchText(List<Task> list) {
+        if (searchText.equals("")) return list;
+        List<Task> result = new ArrayList<>();
+        for (Task task : list) {
+            if (task.getFilename().contains(searchText)) {
+                result.add(task);
+            }
+        }
+        return result;
+    }
+
     private void setTableViewOnline() {
         List<Session> resultListOnlineSessions = new ArrayList<>();
         for (Session session : myModel.getOnlineSessionsMap().values()) {  // todo Concurrent
@@ -690,7 +751,7 @@ public class WindowView implements View {
                 }
             }
         }
-        Collections.sort(resultListOnlineSessions, new Comparator<Session>() {
+        resultListOnlineSessions.sort(new Comparator<Session>() {
             @Override
             public int compare(Session session1, Session session2) {
                 return session1.getConnectionTime().compareTo(session2.getConnectionTime());
@@ -795,9 +856,6 @@ public class WindowView implements View {
         TableColumn<Task, String> recentlyFolderColumn =
                 (TableColumn<Task, String>) tableViewRecently.getColumns().get(6);
 
-
-        sortColumn = recentlyEndColumn;
-
         tableViewRecently.setOnMousePressed(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent event) {
                 if (event.isSecondaryButtonDown()) {
@@ -817,15 +875,6 @@ public class WindowView implements View {
             }
         });
 
-        tableViewRecently.setOnSort(new EventHandler<SortEvent<TableView<Task>>>() {
-            @Override
-            public void handle(SortEvent<TableView<Task>> event) {
-                if (tableViewRecently.getSortOrder().size() > 0) {
-                    sortColumn = tableViewRecently.getSortOrder().get(0);
-                }
-            }
-        });
-
         recentlyTaskChoiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
@@ -835,7 +884,6 @@ public class WindowView implements View {
                 }
             }
         });
-
 
         recentlyEndColumn.setCellValueFactory(new PropertyValueFactory<>("timeEndToString"));
         recentlyEndColumn.setStyle("-fx-alignment: CENTER;");
@@ -863,10 +911,11 @@ public class WindowView implements View {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem inQuantel = new MenuItem("в Quantel");
         MenuItem inDalet = new MenuItem("в Dalet основной");
-        MenuItem inDaletFFAStrans = new MenuItem("в Dalet FFAStrans");
+        MenuItem inAirManager = new MenuItem("в Air-manager");
         MenuItem inDaletReserv = new MenuItem("в Dalet через резерв");
         MenuItem quantelNaPryamkiPC1 = new MenuItem("в Quantel на PC1");
         MenuItem quantelNaPryamkiPC2 = new MenuItem("в Quantel на PC2");
+        MenuItem copyToEMG = new MenuItem("в EMG");
         MenuItem copyToCulture = new MenuItem("в ТК Культура");
         MenuItem copyToDezhchast = new MenuItem("в ДЧ");
         MenuItem copyToObmenUtro = new MenuItem("ДУРам");
@@ -874,8 +923,10 @@ public class WindowView implements View {
         MenuItem openFolder = new MenuItem("Открыть папку с файлом");
 
 
-        contextMenu.getItems().addAll(inQuantel, inDalet, inDaletFFAStrans, inDaletReserv,
-                quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToCulture, copyToDezhchast, copyToObmenUtro, copyToUploadFolder, openFolder);
+        contextMenu.getItems().addAll(
+                inQuantel, inDalet, inAirManager, inDaletReserv,
+                quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToEMG,
+                copyToCulture, copyToDezhchast, copyToObmenUtro, copyToUploadFolder, openFolder);
         tableCell.setContextMenu(contextMenu);
         Task task = (Task) tableCell.getTableRow().getItem();
         if (task != null) {
@@ -896,10 +947,10 @@ public class WindowView implements View {
                 fireCopyFile(fileFrom, fileTo, "в Dalet основной");
             });
 
-            inDaletFFAStrans.setOnAction(event1 -> {
-                String rikrzFFAStrans = "\\\\rikrz\\WF-RIK\\";
-                File fileTo = new File(rikrzFFAStrans + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFile(fileFrom, fileTo, "в Dalet FFAStrans");
+            inAirManager.setOnAction(event1 -> {
+                String airManagerPath = "\\\\vfs\\air-manager$\\";
+                File fileTo = new File(airManagerPath + task.getFilename());
+                fireCopyFile(fileFrom, fileTo, "в Air-manager");
             });
 
             inDaletReserv.setOnAction(event1 -> {
@@ -943,6 +994,12 @@ public class WindowView implements View {
                         + task.getFilename());
                 Helper.print(fileTo);
                 fireCopyFile(fileFrom, fileTo, "на PC2");
+            });
+
+            copyToEMG.setOnAction(event1 -> {
+                String EMGPath = "\\\\ftpres3\\emg$\\";
+                File fileTo = new File(EMGPath + task.getFilename());
+                fireCopyFile(fileFrom, fileTo, "в EMG");
             });
 
             copyToCulture.setOnAction(event1 -> {

@@ -1,5 +1,7 @@
 package myProject.model.data;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import myProject.Helper;
 
 import java.text.ParseException;
@@ -9,7 +11,8 @@ import java.util.Locale;
 
 public class Task {
 
-    private UnitFile unitFile;
+    // Alternate date implementation
+//    private UnitFile unitFile;
 
     private UploadState state = UploadState.NOT_START;
     private Date timeStart;
@@ -17,6 +20,9 @@ public class Task {
     private String speed = "";
     private String login = "";
     private String IDSession;
+
+    // Implementation for JavaFX
+    private final ObjectProperty<UnitFile> unitFile = new SimpleObjectProperty<>();
 
     public Task(String login, String IDSession) {
         this.login = login;
@@ -34,7 +40,7 @@ public class Task {
         int startIndex = data.indexOf("\"") + 1;
         int endIndex = data.substring(startIndex).indexOf("\"") + startIndex;
         state = UploadState.START_UPLOAD;
-        unitFile = new UnitFile(data.substring(startIndex, endIndex));
+        unitFile.set(new UnitFile(data.substring(startIndex, endIndex)));
     }
 
     public void endUpload(String data) {
@@ -51,7 +57,7 @@ public class Task {
                 .replaceAll("\\D", "")) / 1024.0;
         speed = String.format("%.2f", intSpeed).concat(" MB/sec");
         state = UploadState.END_UPLOAD;
-        unitFile.setSize(data.substring(data.lastIndexOf(" - ") + 3, data.lastIndexOf(" Bytes") + 6));
+        unitFile.get().setSize(data.substring(data.lastIndexOf(" - ") + 3, data.lastIndexOf(" Bytes") + 6));
     }
 
     public Date getTimeStart() {
@@ -71,21 +77,24 @@ public class Task {
         return new SimpleDateFormat("HH:mm:ss").format(timeEnd);
     }
 
+    public final ObjectProperty<UnitFile> unitFileObjectProperty() {
+        return this.unitFile;
+    }
 
     public String getSpeed() {
         return speed;
     }
 
     public String getFileSize() {
-        return unitFile.getSize();
+        return unitFile.get().getSize();
     }
 
     public String getFilename() {
-        return unitFile.getFile().getName();
+        return unitFile.get().getFile().getName();
     }
 
     public String getFullname() {
-        return unitFile.getFile().getAbsolutePath();
+        return unitFile.get().getFile().getAbsolutePath();
     }
 
     public String getLogin() {
@@ -93,7 +102,7 @@ public class Task {
     }
 
     public String getFolder() {
-        return unitFile.getFile().getParentFile().getAbsolutePath();
+        return unitFile.get().getFile().getParentFile().getAbsolutePath();
     }
 
     public UploadState getState() {
@@ -105,11 +114,11 @@ public class Task {
     }
 
     public String getSize() {
-        return unitFile.getSize().replaceFirst("\\.d* ", "!!! ");
+        return unitFile.get().getSize().replaceFirst("\\.d* ", "!!! ");
     }
 
     public UnitFile getUnitFile() {
-        return unitFile;
+        return unitFile.get();
     }
 
     public String getIDSession() {
