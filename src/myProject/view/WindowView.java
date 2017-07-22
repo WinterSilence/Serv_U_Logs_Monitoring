@@ -96,7 +96,7 @@ public class WindowView implements View {
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170721";
+    private String title = "WorkProjectApp 20170722";
     private String selectedLogin = " All";
     private String searchText = "";
 
@@ -732,7 +732,7 @@ public class WindowView implements View {
         if (searchText.equals("")) return list;
         List<Task> result = new ArrayList<>();
         for (Task task : list) {
-            if (task.getFilename().contains(searchText)) {
+            if (task.getFilename().toLowerCase().contains(searchText.toLowerCase())) {
                 result.add(task);
             }
         }
