@@ -10,6 +10,8 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventTarget;
@@ -28,6 +30,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -96,9 +99,10 @@ public class WindowView implements View {
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170722";
+    private String title = "WorkProjectApp 20170724";
     private String selectedLogin = " All";
     private String searchText = "";
+    private ArrayList<Task> selectedTasksSorted = new ArrayList<>();
 
     private StringProperty currentDate;
     private StringProperty yesterdayDate;
@@ -524,6 +528,13 @@ public class WindowView implements View {
     private TreeSet<String> recentFilesLogins = new TreeSet<>();
 
     private void setTableViewRecently() {
+        int focusedIndex = tableViewRecently.getSelectionModel().getFocusedIndex();
+        Task focusedTask = null;
+        if (focusedIndex >= 0) {
+            focusedTask = tableViewRecently.getItems().get(focusedIndex);
+        }
+        ArrayList<Task> selectedTasks = new ArrayList<>(tableViewRecently.getSelectionModel().getSelectedItems());
+
         List<Task> resultTableRecentlyFiles = filterTaskListHours(myModel.getCompletedTasks());  // todo Concurrent
 
         resultTableRecentlyFiles.addAll(filterTaskListHours(myModel.getUncompletedTasks()));
@@ -595,11 +606,28 @@ public class WindowView implements View {
             }
         });
 */
-
         tableViewRecently.setRowFactory(new Callback<TableView<Task>, TableRow<Task>>() {
             @Override
             public TableRow<Task> call(TableView<Task> tableView) {
-                return new TableRow<Task>() {
+                final TableRow<Task> row = new TableRow<Task>() {
+                    {
+                        setOnDragDetected(new EventHandler<MouseEvent>() {
+                            @Override
+                            public void handle(MouseEvent event) {
+                                startFullDrag();
+                                getTableView().getSelectionModel().select(getIndex());
+                            }
+                        });
+                        setOnMouseDragEntered(new EventHandler<MouseDragEvent>() {
+
+                            @Override
+                            public void handle(MouseDragEvent event) {
+                                getTableView().getSelectionModel().select(getIndex());
+                            }
+
+                        });
+                    }
+
                     @Override
                     public void updateItem(Task task, boolean empty) {
                         if (!empty) {
@@ -613,9 +641,18 @@ public class WindowView implements View {
                                 }
                             }
                         }
+//                        contextMenuRecentlyUploadedFiles(this);
+//                        final ContextMenu rowMenu = contextMenuRecentlyUploadedFiles(this);
+//                        this.setContextMenu(rowMenu);
+//                        this.contextMenuProperty().bind(
+//                                Bindings.when(Bindings.isNotNull(this.itemProperty()))
+//                                        .then(rowMenu)
+//                                        .otherwise((ContextMenu) null));
+
                         super.updateItem(task, empty);
                     }
                 };
+                return row;
             }
         });
 
@@ -660,6 +697,43 @@ public class WindowView implements View {
 */
 
         tableViewRecently.setItems(FXCollections.observableArrayList(resultTableRecentlyFiles));
+
+//        tableViewRecently.get().addListener(new ListChangeListener<Task>() {
+//            @Override
+//            public void onChanged(Change<? extends Task> c) {
+//                tableViewRecently.setContextMenu(contextMenuRecentlyUploadedFiles());
+//            }
+//        });
+
+        if (resultTableRecentlyFiles.contains(focusedTask)) {
+            focusedIndex = resultTableRecentlyFiles.indexOf(focusedTask);
+        }
+
+        System.out.println("selectedTasks.size() = " + selectedTasks.size());
+        selectedTasksSorted = new ArrayList<>();
+        for (Task task : selectedTasks) {
+            if (resultTableRecentlyFiles.contains(task)) {
+                selectedTasksSorted.add(task);
+            }
+        }
+
+//        for (Task task : selectedTasksSorted) {
+//            System.out.println(task.getFilename());
+//        }
+//        System.out.println("focused Index = " + focusedIndex);
+
+        if (selectedTasksSorted.size() > 0) {
+            int[] selectedIndexes = new int[selectedTasksSorted.size() - 1];
+            for (int i = 0; i < selectedIndexes.length; i++) {
+                selectedIndexes[i] = resultTableRecentlyFiles.indexOf(selectedTasksSorted.get(i + 1));
+            }
+
+            if (selectedIndexes.length > 0) {
+                tableViewRecently.getSelectionModel().selectIndices(resultTableRecentlyFiles.indexOf(
+                        selectedTasksSorted.get(0)), selectedIndexes);
+            }
+            tableViewRecently.getSelectionModel().focus(focusedIndex);
+        }
 
         setRightStatusLabelText("Size - " + resultTableRecentlyFiles.size());
     }
@@ -839,7 +913,6 @@ public class WindowView implements View {
         onlineClientColumn.setStyle("-fx-alignment: CENTER;");
     }
 
-
     private void showRecentlyUploadedFiles() {
         TableColumn<Task, String> recentlyEndColumn =
                 (TableColumn<Task, String>) tableViewRecently.getColumns().get(0);
@@ -856,6 +929,7 @@ public class WindowView implements View {
         TableColumn<Task, String> recentlyFolderColumn =
                 (TableColumn<Task, String>) tableViewRecently.getColumns().get(6);
 
+/*
         tableViewRecently.setOnMousePressed(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent event) {
                 if (event.isSecondaryButtonDown()) {
@@ -874,6 +948,8 @@ public class WindowView implements View {
                 }
             }
         });
+*/
+//        tableViewRecently.setContextMenu(contextMenuRecentlyUploadedFiles());
 
         recentlyTaskChoiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
             @Override
@@ -884,6 +960,33 @@ public class WindowView implements View {
                 }
             }
         });
+
+        tableViewRecently.getSelectionModel().getSelectedItems().addListener(new ListChangeListener<Task>() {
+            @Override
+            public void onChanged(Change<? extends Task> c) {
+                tableViewRecently.setContextMenu(contextMenuRecentlyUploadedFiles());
+            }
+        });
+
+        tableViewRecently.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+//        tableViewRecently.getSelectionModel().getSelectedItems().addListener(new ListChangeListener<Task>() {
+//            @Override
+//            public void onChanged(Change<? extends Task> c) {
+//                selectedIndexesList = new int[c.getList().size()];
+//                int i = 0;
+//                selectedList = (ObservableList<Task>) c.getList();
+//                for (Task task : selectedList) {
+//                    if (task != null) {
+//                        System.out.println(task.getFilename());
+//                        System.out.println(tableViewRecently.getItems().indexOf(task));
+//                        selectedIndexesList.add(tableViewRecently.getItems().indexOf(task));
+//                        selectedIndexesList[i++] = tableViewRecently.getItems().indexOf(task);
+//                    }
+//                }
+//                System.out.println(selectedIndexesList.length);
+//            }
+//        });
 
         recentlyEndColumn.setCellValueFactory(new PropertyValueFactory<>("timeEndToString"));
         recentlyEndColumn.setStyle("-fx-alignment: CENTER;");
@@ -907,7 +1010,7 @@ public class WindowView implements View {
         recentlyFolderColumn.setStyle("-fx-alignment: CENTER;");
     }
 
-    private void contextMenuRecentlyUploadedFiles(TableCell tableCell) {
+    private ContextMenu contextMenuRecentlyUploadedFiles() {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem inQuantel = new MenuItem("в Quantel");
         MenuItem inDalet = new MenuItem("в Dalet основной");
@@ -922,133 +1025,148 @@ public class WindowView implements View {
         MenuItem copyToUploadFolder = new MenuItem("Выберете папку ->");
         MenuItem openFolder = new MenuItem("Открыть папку с файлом");
 
-
         contextMenu.getItems().addAll(
                 inQuantel, inDalet, inAirManager, inDaletReserv,
                 quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToEMG,
                 copyToCulture, copyToDezhchast, copyToObmenUtro, copyToUploadFolder, openFolder);
-        tableCell.setContextMenu(contextMenu);
-        Task task = (Task) tableCell.getTableRow().getItem();
-        if (task != null) {
-            File folderFile = task.getUnitFile().getFile().getParentFile();
-            String pathToFolder = Helper.renameFolder(folderFile.getAbsolutePath().toLowerCase());
+//        tableCell.setContextMenu(contextMenu);
+//        tableRow.setContextMenu(contextMenu);
 
-            File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
+//        Task task = tableRow.getItem();
+
+//        for (Task task : selectedTasksSorted) {
+        if (selectedTasksSorted.size() > 0) {
+
+//            File folderFile = task.getUnitFile().getFile().getParentFile();
+//            String pathToFolder = Helper.renameFolder(folderFile.getAbsolutePath().toLowerCase());
+//            File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
 
             inQuantel.setOnAction(event1 -> {
-                String quantelFolderPath = "\\\\ftpres\\quantel$\\";
-                File fileTo = new File(quantelFolderPath + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFile(fileFrom, fileTo, "в Quantel");
-            });
+                for (Task task : selectedTasksSorted) {
 
-            inDalet.setOnAction(event1 -> {
-                String rikrzFolderPath = "\\\\rikrz\\dalet-in\\";
-                File fileTo = new File(rikrzFolderPath + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFile(fileFrom, fileTo, "в Dalet основной");
-            });
+                    File folderFile = task.getUnitFile().getFile().getParentFile();
+                    String pathToFolder = Helper.renameFolder(folderFile.getAbsolutePath().toLowerCase());
+                    File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
 
-            inAirManager.setOnAction(event1 -> {
-                String airManagerPath = "\\\\vfs\\air-manager$\\";
-                File fileTo = new File(airManagerPath + task.getFilename());
-                fireCopyFile(fileFrom, fileTo, "в Air-manager");
-            });
-
-            inDaletReserv.setOnAction(event1 -> {
-                String rikrzReserv = "\\\\172.27.68.118\\storages\\CARBONCODER\\IN_FTP\\";
-                File fileTo = new File(rikrzReserv + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFile(fileFrom, fileTo, "в Dalet Резерв");
-            });
-
-            quantelNaPryamkiPC1.setOnAction(event1 -> {
-                String PC1Address = "\\\\172.18.0.184\\d$\\";
-                String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
-                File currDateFolder = new File(PC1Address + currDateFolderPath);
-                if (!currDateFolder.exists()) {
-                    try {
-                        Files.createDirectories(currDateFolder.toPath());
-                    } catch (IOException ex) {
-                        Helper.log(ex);
-                    }
+                    String quantelFolderPath = "\\\\ftpres\\quantel$\\";
+                    File fileTo = new File(quantelFolderPath + Helper.renameFromCirrilic(task.getFilename()));
+                    fireCopyFile(fileTo, "в Quantel", fileFrom);
                 }
-
-                File fileTo = new File(currDateFolder.getAbsolutePath() + File.separator
-                        + task.getFilename());
-                Helper.print(fileTo);
-                fireCopyFile(fileFrom, fileTo, "на PC1");
-
             });
 
-            quantelNaPryamkiPC2.setOnAction(event1 -> {
-                String PC2Address = "\\\\172.18.0.183\\d$\\";
-                String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
-                File currDateFolder = new File(PC2Address + currDateFolderPath);
-                if (!currDateFolder.exists()) {
-                    try {
-                        Files.createDirectories(currDateFolder.toPath());
-                    } catch (IOException ex) {
-                        Helper.log(ex);
-                    }
-                }
-
-                File fileTo = new File(currDateFolder.getAbsolutePath() + File.separator
-                        + task.getFilename());
-                Helper.print(fileTo);
-                fireCopyFile(fileFrom, fileTo, "на PC2");
-            });
-
-            copyToEMG.setOnAction(event1 -> {
-                String EMGPath = "\\\\ftpres3\\emg$\\";
-                File fileTo = new File(EMGPath + task.getFilename());
-                fireCopyFile(fileFrom, fileTo, "в EMG");
-            });
-
-            copyToCulture.setOnAction(event1 -> {
-                String cultureFolderPath = "\\\\ftpres\\culture$\\";
-                File fileTo = new File(cultureFolderPath + Helper.renameFromCirrilic(task.getFilename()));
-                fireCopyFile(fileFrom, fileTo, "в Культуру");
-            });
-            copyToDezhchast.setOnAction(event1 -> {
-                String dezhchastFolderPath = "\\\\ftpres\\upload\\upload_wan\\DezhChast\\";
-                File fileTo = new File(dezhchastFolderPath + task.getFilename());
-                fireCopyFile(fileFrom, fileTo, "в ДЧ");
-            });
-
-            copyToObmenUtro.setOnAction(event1 -> {
-                String obmenUtroFolderPath = "\\\\ftpres\\obmen-utro$\\for_moscow\\";
-                File fileTo = new File(obmenUtroFolderPath + task.getFilename());
-                fireCopyFile(fileFrom, fileTo, "ДУРам");
-            });
-
+//            inDalet.setOnAction(event1 -> {
+//                String rikrzFolderPath = "\\\\rikrz\\dalet-in\\";
+//                File fileTo = new File(rikrzFolderPath + Helper.renameFromCirrilic(task.getFilename()));
+//                fireCopyFile(fileTo, "в Dalet основной", fileFrom);
+//            });
+//
+//            inAirManager.setOnAction(event1 -> {
+//                String airManagerPath = "\\\\vfs\\air-manager$\\";
+//                File fileTo = new File(airManagerPath + task.getFilename());
+//                fireCopyFile(fileTo, "в Air-manager", fileFrom);
+//            });
+//
+//            inDaletReserv.setOnAction(event1 -> {
+//                String rikrzReserv = "\\\\172.27.68.118\\storages\\CARBONCODER\\IN_FTP\\";
+//                File fileTo = new File(rikrzReserv + Helper.renameFromCirrilic(task.getFilename()));
+//                fireCopyFile(fileTo, "в Dalet Резерв", fileFrom);
+//            });
+//
+//            quantelNaPryamkiPC1.setOnAction(event1 -> {
+//                String PC1Address = "\\\\172.18.0.184\\d$\\";
+//                String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
+//                File currDateFolder = new File(PC1Address + currDateFolderPath);
+//                if (!currDateFolder.exists()) {
+//                    try {
+//                        Files.createDirectories(currDateFolder.toPath());
+//                    } catch (IOException ex) {
+//                        Helper.log(ex);
+//                    }
+//                }
+//
+//                File fileTo = new File(currDateFolder.getAbsolutePath() + File.separator
+//                        + task.getFilename());
+//                Helper.print(fileTo);
+//                fireCopyFile(fileTo, "на PC1", fileFrom);
+//
+//            });
+//
+//            quantelNaPryamkiPC2.setOnAction(event1 -> {
+//                String PC2Address = "\\\\172.18.0.183\\d$\\";
+//                String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
+//                File currDateFolder = new File(PC2Address + currDateFolderPath);
+//                if (!currDateFolder.exists()) {
+//                    try {
+//                        Files.createDirectories(currDateFolder.toPath());
+//                    } catch (IOException ex) {
+//                        Helper.log(ex);
+//                    }
+//                }
+//
+//                File fileTo = new File(currDateFolder.getAbsolutePath() + File.separator
+//                        + task.getFilename());
+//                Helper.print(fileTo);
+//                fireCopyFile(fileTo, "на PC2", fileFrom);
+//            });
+//
+//            copyToEMG.setOnAction(event1 -> {
+//                String EMGPath = "\\\\ftpres3\\emg$\\";
+//                File fileTo = new File(EMGPath + task.getFilename());
+//                fireCopyFile(fileTo, "в EMG", fileFrom);
+//            });
+//
+//            copyToCulture.setOnAction(event1 -> {
+//                String cultureFolderPath = "\\\\ftpres\\culture$\\";
+//                File fileTo = new File(cultureFolderPath + Helper.renameFromCirrilic(task.getFilename()));
+//                fireCopyFile(fileTo, "в Культуру", fileFrom);
+//            });
+//            copyToDezhchast.setOnAction(event1 -> {
+//                String dezhchastFolderPath = "\\\\ftpres\\upload\\upload_wan\\DezhChast\\";
+//                File fileTo = new File(dezhchastFolderPath + task.getFilename());
+//                fireCopyFile(fileTo, "в ДЧ", fileFrom);
+//            });
+//
+//            copyToObmenUtro.setOnAction(event1 -> {
+//                String obmenUtroFolderPath = "\\\\ftpres\\obmen-utro$\\for_moscow\\";
+//                File fileTo = new File(obmenUtroFolderPath + task.getFilename());
+//                fireCopyFile(fileTo, "ДУРам", fileFrom);
+//            });
+//
             copyToUploadFolder.setOnAction(event -> {
                 DirectoryChooser directoryChooser = new DirectoryChooser();
                 directoryChooser.setInitialDirectory(new File("\\\\ftpres\\upload\\upload_wan\\"));
                 File folderTo = directoryChooser.showDialog(stage);
 
+//                for (Task task : selectedTasksSorted) {
+//                    File folderFile = task.getUnitFile().getFile().getParentFile();
+//                    String pathToFolder = Helper.renameFolder(folderFile.getAbsolutePath().toLowerCase());
+//                    File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
                 if (folderTo != null) {
-                    System.out.println(folderTo);
-                    File fileTo = new File(folderTo + File.separator + task.getFilename());
-                    fireCopyFile(fileFrom, fileTo, " в " + folderTo.getName());
+//                        File fileTo = new File(folderTo + File.separator + task.getFilename());
+                    fireCopyFiles(folderTo, folderTo.getName(), selectedTasksSorted);
                 }
+//                }
             });
-
-            openFolder.setOnAction(event1 -> {
-                try {
-                    Desktop.getDesktop().open(new File(pathToFolder));
-                } catch (IOException ex) {
-                    Helper.log(ex);
-                }
-            });
+//
+//            openFolder.setOnAction(event1 -> {
+//                try {
+//                    Desktop.getDesktop().open(new File(pathToFolder));
+//                } catch (IOException ex) {
+//                    Helper.log(ex);
+//                }
+//            });
         }
+        return contextMenu;
     }
 
-    private void fireCopyFile(File fileFrom, File fileTo, String text) {
+    private void fireCopyFile(File folderTo, String text, File fileFrom) {
         final BooleanProperty booleanPropertyTransferComplete = new SimpleBooleanProperty();
 
         Thread copyThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    Helper.transferFile(fileFrom, fileTo);
+                    Helper.transferFile(folderTo, fileFrom);
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
@@ -1089,9 +1207,9 @@ public class WindowView implements View {
                 if (newValue) {
                     Alert alert = new Alert(Alert.AlertType.ERROR);
                     alert.setHeaderText("");
-                    alert.setTitle(fileTo.getName());
+                    alert.setTitle(fileFrom.getName());
                     alert.setGraphic(null);
-                    alert.setContentText("Файл " + fileTo.getName() + " скопирован " + text);
+                    alert.setContentText("Файл " + fileFrom.getName() + " скопирован в " + text);
                     alert.initModality(Modality.NONE);
                     Timeline idleStage = new Timeline(new KeyFrame(Duration.seconds(10), new EventHandler<ActionEvent>() {
                         @Override
@@ -1106,6 +1224,15 @@ public class WindowView implements View {
                 }
             }
         });
+    }
+
+    private void fireCopyFiles(File fileTo, String text, ArrayList<Task> selectedTasksSorted) {
+        for (Task task : selectedTasksSorted) {
+            File folderFile = task.getUnitFile().getFile().getParentFile();
+            String pathToFolder = Helper.renameFolder(folderFile.getAbsolutePath().toLowerCase());
+            File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
+            fireCopyFile(fileTo, text, fileFrom);
+        }
     }
 
     private void showUploadingFiles() {
@@ -1294,7 +1421,7 @@ public class WindowView implements View {
                         }
                         Helper.pause(5);
                     }
-                    fireCopyFile(fileFrom, fileTo, text);
+                    fireCopyFile(fileTo, text, fileFrom);
                     setOfProcesses.remove(controlUploadProcess);
                     if (setOfProcesses.size() == 0) {
                         mapOfProcesses.remove(fileFrom);

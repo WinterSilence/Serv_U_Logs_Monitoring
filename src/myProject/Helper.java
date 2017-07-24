@@ -115,16 +115,18 @@ public class Helper {
         return result;
     }
 
-    public static void transferFile(File from, File to) throws IOException {
+    public static void transferFile(File folderTo, File from) throws IOException {
         if (!from.exists()) {
             try {
+                //todo java.nio.file.NoSuchFileException: u:\obmen-utro\Мошкара.m2v
                 from = Files.createFile(from.toPath()).toFile();
             } catch (IOException ex) {
                 log(ex);
             }
         }
-        Files.copy(from.toPath(), to.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        to.setLastModified(new Date().getTime());
+        File fileTo = new File(folderTo + File.separator + from.getName());
+        Files.copy(from.toPath(), fileTo.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        fileTo.setLastModified(new Date().getTime());
     }
 
     public static void writeLog(String string) {
