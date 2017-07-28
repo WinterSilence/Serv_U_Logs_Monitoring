@@ -139,14 +139,6 @@ public class Session {
     }
 
     private void addTask(Task taskToAdd) {
-/*
-        for (Task task : tasks) {
-            if (task.getFilename().equals(taskToAdd.getFilename())){
-                tasks.remove(task);
-                break;
-            }
-        }
-*/
         tasks.add(taskToAdd);
     }
 

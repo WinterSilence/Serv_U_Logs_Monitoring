@@ -105,7 +105,7 @@ public class Helper {
     // Переименование/преобразование пути к папкам из вида H:\FTPSERVER\ в \\ftpres и т.п.
 
     public static String renameFolder(String folder) {
-        String result = folder;
+        String result = folder.toLowerCase();
         result = result.replaceFirst("h:\\\\ftpserver\\\\", "\\\\\\\\ftpres\\\\");
         result = result.replaceFirst("u:\\\\obmen-utro\\\\", "\\\\\\\\ftpres\\\\obmen-utro\\$\\\\");
         result = result.replaceFirst("e:\\\\static_folders\\\\culture", "\\\\\\\\ftpres\\\\culture\\$\\\\");
@@ -115,18 +115,13 @@ public class Helper {
         return result;
     }
 
-    public static void transferFile(File folderTo, File from) throws IOException {
-        if (!from.exists()) {
-            try {
-                //todo java.nio.file.NoSuchFileException: u:\obmen-utro\Мошкара.m2v
-                from = Files.createFile(from.toPath()).toFile();
-            } catch (IOException ex) {
-                log(ex);
+    public static void transferFile(File from, File to) throws IOException {
+        if (from.exists()) {
+            if (!to.exists()) {
+                Files.copy(from.toPath(), to.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
+            to.setLastModified(new Date().getTime());
         }
-        File fileTo = new File(folderTo + File.separator + from.getName());
-        Files.copy(from.toPath(), fileTo.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        fileTo.setLastModified(new Date().getTime());
     }
 
     public static void writeLog(String string) {

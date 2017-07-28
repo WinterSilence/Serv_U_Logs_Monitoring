@@ -204,8 +204,6 @@ public class MyModel {
         Helper.print("Check updated - " + count);
     }
 
-//    private Map<File, Long> tasksSizeMap = new HashMap<>();
-
     private void tasksUpdate() {
         uploadingTasks = new ArrayList<>();
         completedTasks = new ArrayList<>();
@@ -221,26 +219,22 @@ public class MyModel {
                             if (new Date().getTime() - fileTask.lastModified() < 8 * 60 * 60000) {
                                 uploadingTasks.add(task);
                             } else {
-                                System.err.println(new Date().getTime() - fileTask.lastModified());
+                                System.err.println("Время последнего изменения сессиии большле восьми часов = " +
+                                        (new Date().getTime() - fileTask.lastModified()) / (60 * 60000));
                                 task.setState(UploadState.END_UPLOAD);
                             }
-
-//                        } else {
-//                            if (new Date().getTime() - tasksSizeMap.get(fileTask) > 60000) {
-//                                tasksSizeMap.remove(fileTask);
-
-//                        }
                         } else {
                             Helper.print("not exist - " + fileTask.getAbsolutePath());
                             task.setState(UploadState.ERROR_UPLOAD);
                         }
-//                        uploadingTasks.add(task);
                     } else {
                         task.setState(UploadState.ERROR_UPLOAD);
                     }
                 }
+                if (task.getLogin().equals(Helper.EMPTY_LOGIN_FIELD)){
+                    checkTaskUnknownLogin(task);
+                }
                 if (task.getState().equals(UploadState.END_UPLOAD)) {
-
                     completedTasks.add(task);
                 }
                 if (task.getState().equals(UploadState.ERROR_UPLOAD)) {
@@ -249,6 +243,14 @@ public class MyModel {
             }
         }
 
+    }
+
+    private void checkTaskUnknownLogin(Task task){
+        String taskFolder = task.getFolder().toLowerCase();
+        String taskFilename = task.getFilename().toLowerCase();
+        if (taskFolder.endsWith("upload_inet")) task.setLogin("Reporter");
+        else if (taskFilename.contains("spb")) task.setLogin("Spb");
+        else if (taskFilename.contains("rostovdon")) task.setLogin("Rostovdon");
     }
 
     public Map<String, Session> getOnlineSessionsMap() {
