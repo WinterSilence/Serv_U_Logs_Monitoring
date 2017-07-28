@@ -7,6 +7,7 @@ import org.apache.commons.net.ftp.*;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -178,7 +179,7 @@ public class FtpSource implements FileSource {
         Helper.print("Making copy!");
         File fileCopy = createLocalFile(filename);
         fileCopy.deleteOnExit();
-        Helper.transferFile(fileFromFTP, fileCopy);
+        Files.copy(fileFromFTP.toPath(), fileCopy.toPath(), StandardCopyOption.REPLACE_EXISTING);
         Helper.print("Copy done!");
     }
 }

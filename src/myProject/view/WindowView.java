@@ -11,7 +11,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventTarget;
@@ -386,6 +385,7 @@ public class WindowView implements View {
                             ftpSource.copyExistsProperty().addListener((observable, oldValue, newValue) -> {
                                 Helper.print("CopyExist");
                                 Helper.print("Start connection");
+                                System.out.println(ftpSource);
                                 fxmlController.establishConnection(ftpSource);
                             });
 
