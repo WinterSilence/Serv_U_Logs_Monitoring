@@ -19,7 +19,7 @@ public class OpenedFile {
     private boolean isOffline = true;
 
     private int count = 0;
-    private final int TRY_COUNT = 5;
+    private final int TRY_COUNT = 1;
 
     public void initTodayDataMap(File folder) {
         String todayDayFilename = new SimpleDateFormat("yyyy_MM_dd").format(new Date()) + ".log";
@@ -39,6 +39,7 @@ public class OpenedFile {
                 Helper.pause(5);
             }
         }
+        count = 0;
     }
 
     public void initAnyDateDataMap(File folder, Date anyDate) {

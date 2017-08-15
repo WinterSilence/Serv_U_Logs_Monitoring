@@ -97,7 +97,7 @@ public class WindowView implements View {
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170728";
+    private String title = "WorkProjectApp 20170731";
     private String selectedLogin = " All";
     private String searchText = "";
     private ArrayList<Task> selectedTasksSorted = new ArrayList<>();
@@ -144,6 +144,7 @@ public class WindowView implements View {
         setSearchTextField();
         setOfflineProperty();
         setCopyAfterInfoLabel();
+        setStartCircleAndStopButton();
     }
 
     private void init() {
@@ -193,14 +194,12 @@ public class WindowView implements View {
     }
 
     private void setOfflineProperty() {
-        fxmlController.offlineProperty().addListener(new ChangeListener<Boolean>() {
+        fxmlController.startConnectionProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if (!newValue) {
-                    setStartCircle(Color.LIGHTGREEN);
-                    stopButton.setDisable(false);
+                if (newValue) {
                 } else {
-                    setStartCircle(Color.RED);
+//                    setStartCircle(Color.RED);
                     startButtonText.setVisible(true);
                     startButton.setDisable(false);
                     FTPButton.setDisable(false);
@@ -411,19 +410,19 @@ public class WindowView implements View {
                 }
 /*
                     Platform.runLater(new Runnable() {
-//                                Alert alert = new Alert(Alert.AlertType.ERROR);
-//                                alert.setContentText("File not found or some IO error occurred!!!");
-//                                alert.showAndWait();
-//                  }
+                                Alert alert = new Alert(Alert.AlertType.ERROR);
+                                alert.setContentText("File not found or some IO error occurred!!!");
+                                alert.showAndWait();
+                  }
 */
-                fxmlController.offlineProperty().addListener(new ChangeListener<Boolean>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                        if (newValue) {
-                            ftpSource.stop();
-                        }
-                    }
-                });
+//                fxmlController.offlineProperty().addListener(new ChangeListener<Boolean>() {
+//                    @Override
+//                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+//                        if (newValue) {
+//                            ftpSource.stop();
+//                        }
+//                    }
+//                });
                 if (!result) {
                     startButtonText.setVisible(true);
                     startButton.setDisable(false);
@@ -501,9 +500,21 @@ public class WindowView implements View {
         return result.isPresent();
     }
 
-    private void setStartCircle(Color color) {
+    private void setStartCircleAndStopButton() {
         Circle startCircle = (Circle) anchorPaneRecently.lookup("#startCircle");
-        startCircle.setFill(color);
+        fxmlController.connectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if (newValue) {
+                    startCircle.setFill(Color.LIGHTGREEN);
+                    stopButton.setDisable(false);
+//                    stopButton.setDisable(false);
+                } else {
+                    startCircle.setFill(Color.RED);
+                    stopButton.setDisable(true);
+                }
+            }
+        });
     }
 
     public void update() {

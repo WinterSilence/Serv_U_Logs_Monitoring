@@ -9,11 +9,13 @@ import myProject.model.infoFromFile.OpenedFile;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MyModel {
 
     private Map<String, Session> allSessionsMap = new HashMap<>();
-    private List<Task> completedTasks = new ArrayList<>();
+    private List<Task> completedTasks = new CopyOnWriteArrayList<>();
     private List<Task> uploadingTasks = new ArrayList<>();
     private List<Task> uncompletedTasks = new ArrayList<>();
 
@@ -21,6 +23,7 @@ public class MyModel {
 
     //  Ненужные учётки
     private List<String> bannedLogins = new ArrayList<>();
+    private FileSource fileSource;
 
     {
         bannedLogins.add("mediagrid-reklama");
@@ -61,10 +64,13 @@ public class MyModel {
         return uploadingTasks;
     }
 
-    // Init today
-    public void initToday(FileSource fileSource) {
-        reset();
+    public void setFileSource(FileSource fileSource) {
+        this.fileSource = fileSource;
+    }
 
+    // Init today
+    public void initToday() {
+        reset();
         File mainFolderFile = new File(fileSource.getSourceFolder());
 
         openedFile.resetInitMap();
@@ -90,8 +96,8 @@ public class MyModel {
         tasksUpdate();
     }
 
-    public void initDefault(FileSource fileSource) {
-        initToday(fileSource);
+    public void initDefault() {
+        initToday();
         File mainFolderFile = new File(fileSource.getSourceFolder());
 
         openedFile.initAnyDateDataMap(mainFolderFile, Helper.yesterday());
@@ -117,7 +123,7 @@ public class MyModel {
     }
 
     // Init with any date
-    public void init(FileSource fileSource, Date... dates) {
+    public void init(Date... dates) {
         reset();
 
         File mainFolderFile = new File(fileSource.getSourceFolder());
@@ -254,7 +260,7 @@ public class MyModel {
     }
 
     public Map<String, Session> getOnlineSessionsMap() {
-        Map<String, Session> result = new HashMap<>();
+        Map<String, Session> result = new ConcurrentHashMap<>();
         for (Map.Entry<String, Session> pair : allSessionsMap.entrySet()) {
             if (!pair.getValue().isOffline()) {
                 result.put(pair.getKey(), pair.getValue());

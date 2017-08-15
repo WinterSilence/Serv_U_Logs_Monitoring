@@ -1,6 +1,6 @@
 package myProject.controller;
 
-import javafx.application.Platform;
+//import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.stage.Stage;
@@ -19,13 +19,15 @@ public class FXMLController implements Controller {
     private MyModel myModel;
     private WindowView view;
 
-    private BooleanProperty offline = new SimpleBooleanProperty(true);
+    private BooleanProperty connected = new SimpleBooleanProperty(false);
+
+    private BooleanProperty startConnection = new SimpleBooleanProperty(false);
 
     public FXMLController(MyModel myModel) {
         this.myModel = myModel;
     }
 
-    public void start(Stage stage) throws IOException{
+    public void start(Stage stage) throws IOException {
         view.startView(stage);
     }
 
@@ -33,11 +35,16 @@ public class FXMLController implements Controller {
         this.view = view;
     }
 
-    public BooleanProperty offlineProperty() {
-        return offline;
+    public BooleanProperty connectedProperty() {
+        return connected;
     }
 
-    private void setOffline() {
+    public BooleanProperty startConnectionProperty() {
+        return startConnection;
+    }
+
+/*
+    private void setOfflineProperty() {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
@@ -45,20 +52,24 @@ public class FXMLController implements Controller {
             }
         });
     }
+*/
 
     public void establishConnection(FileSource fileSource) {
         Thread updateThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 Helper.print("Establish connection");
-                myModel.initDefault(fileSource);
+                startConnection.set(true);
+                myModel.setFileSource(fileSource);
+                myModel.initDefault();
                 view.update();
                 Calendar today = new GregorianCalendar();
-                setOffline();
+
                 while (!myModel.isOffline()) {
+                connected.set(true);
                     Calendar checkDate = new GregorianCalendar();
                     if (Helper.comparingDays(today, checkDate) != 0) {
-                        myModel.initDefault(fileSource);
+                        myModel.initDefault();
                         today = new GregorianCalendar();
                     } else {
                         myModel.update();
@@ -66,7 +77,10 @@ public class FXMLController implements Controller {
                     view.update();
                     Helper.pause(5);
                 }
-                setOffline();
+//                setOffline();
+                connected.set(false);
+                closeConnection();
+                startConnection.set(false);
                 Helper.print("Disconnected");
             }
         });
@@ -80,14 +94,15 @@ public class FXMLController implements Controller {
             @Override
             public void run() {
                 Helper.print("Establish connection");
-                myModel.initToday(fileSource);
+                myModel.setFileSource(fileSource);
+                myModel.initToday();
                 view.update();
                 Calendar today = new GregorianCalendar();
-                setOffline();
+//                setOfflineProperty();
                 while (!myModel.isOffline()) {
                     Calendar checkDate = new GregorianCalendar();
                     if (Helper.comparingDays(today, checkDate) != 0) {
-                        myModel.initToday(fileSource);
+                        myModel.initToday();
                         today = new GregorianCalendar();
                     } else {
                         myModel.update();
@@ -95,7 +110,7 @@ public class FXMLController implements Controller {
                     view.update();
                     Helper.pause(5);
                 }
-                setOffline();
+//                setOfflineProperty();
                 Helper.print("Disconnected today only");
             }
         });
@@ -104,15 +119,16 @@ public class FXMLController implements Controller {
         updateThread.start();
     }
 
-    public void establishConnection(FileSource fileSource, Date ... dates) {
+    public void establishConnection(FileSource fileSource, Date... dates) {
         Thread updateThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 Helper.print("Establish connection");
-                offline.set(false);
-                myModel.init(fileSource, dates);
+                myModel.setFileSource(fileSource);
+//                offline.set(false);
+                myModel.init(dates);
                 view.update();
-                setOffline();
+//                setOfflineProperty();
                 Helper.print("Disconnected");
             }
         });
