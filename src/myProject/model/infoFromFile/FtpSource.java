@@ -132,9 +132,10 @@ public class FtpSource implements FileSource {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
                     while (!offline) {
-                        File fileFromFTP = createLocalFile("fromFtp" + filename);
+                        try {
+
+                            File fileFromFTP = createLocalFile("fromFtp" + filename);
                         boolean success = downloadFromFTP(fileFromFTP, folderFrom + File.separator + filename);
 
                         if (success) {
@@ -142,11 +143,11 @@ public class FtpSource implements FileSource {
                             copyExists.set(true);
                         }
                         Helper.pause(10);
+                        } catch (IOException ex) {
+                            Helper.print("IO Exception");
+                            Helper.log(ex);
+                        }
                     }
-                } catch (IOException ex) {
-                    Helper.print("IO Exception");
-                    Helper.log(ex);
-                }
             }
         });
         thread.setDaemon(true);
