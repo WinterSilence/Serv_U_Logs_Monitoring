@@ -1,6 +1,5 @@
 package myProject.controller;
 
-//import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.stage.Stage;

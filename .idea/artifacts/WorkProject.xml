@@ -14,10 +14,7 @@
     <root id="root">
       <element id="archive" name="WorkProject.jar">
         <element id="module-output" name="WorkProject" />
-        <element id="directory" name="sources">
-          <element id="extracted-dir" path="C:/Program Files/Java/jdk1.8.0_112/lib/commons-net-3.6/commons-net-3.6.jar" path-in-jar="/" />
-          <element id="extracted-dir" path="C:/Program Files/Java/jdk1.8.0_102/lib/commons-net-3.6/commons-net-3.6.jar" path-in-jar="/" />
-        </element>
+        <element id="extracted-dir" path="C:/Program Files/Java/jdk1.8.0_144/lib/commons-net-3.6/commons-net-3.6.jar" path-in-jar="/" />
       </element>
     </root>
   </artifact>

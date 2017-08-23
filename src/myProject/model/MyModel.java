@@ -14,10 +14,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MyModel {
 
-    private Map<String, Session> allSessionsMap = new HashMap<>();
+    private Map<String, Session> allSessionsMap = new ConcurrentHashMap<>();
     private List<Task> completedTasks = new CopyOnWriteArrayList<>();
-    private List<Task> uploadingTasks = new ArrayList<>();
-    private List<Task> uncompletedTasks = new ArrayList<>();
+    private List<Task> uploadingTasks = new CopyOnWriteArrayList<>();
+    private List<Task> uncompletedTasks = new CopyOnWriteArrayList<>();
 
     private OpenedFile openedFile = new OpenedFile();
 
