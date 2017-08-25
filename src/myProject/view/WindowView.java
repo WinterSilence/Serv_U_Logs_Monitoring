@@ -97,7 +97,7 @@ public class WindowView implements View {
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170731";
+    private String title = "WorkProjectApp 20170824";
     private String selectedLogin = " All";
     private String searchText = "";
     private ArrayList<Task> selectedTasksSorted = new ArrayList<>();
@@ -544,7 +544,7 @@ public class WindowView implements View {
         }
         ArrayList<Task> selectedTasks = new ArrayList<>(tableViewRecently.getSelectionModel().getSelectedItems());
 
-        List<Task> resultTableRecentlyFiles = filterTaskListHours(myModel.getCompletedTasks());  // todo Concurrent
+        List<Task> resultTableRecentlyFiles = filterTaskListHours(myModel.getCompletedTasks());
 
         resultTableRecentlyFiles.addAll(filterTaskListHours(myModel.getUncompletedTasks()));
 
@@ -765,7 +765,7 @@ public class WindowView implements View {
 
     private void setTableViewOnline() {
         List<Session> resultListOnlineSessions = new ArrayList<>();
-        for (Session session : myModel.getOnlineSessionsMap().values()) {  // todo Concurrent
+        for (Session session : myModel.getOnlineSessionsMap().values()) {
             if (!session.isEmpty()) {
                 for (Task task : session.getTasks()) {
                     if (task.getState() == UploadState.START_UPLOAD) {
