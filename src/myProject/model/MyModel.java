@@ -211,7 +211,7 @@ public class MyModel {
 
     private void dataUpdate() {
         openedFile.update();
-        // Проверка колическтва онлайн сессий
+        // Проверка количества онлайн сессий
 /*
         List<String> list = new ArrayList<>();
         Map<String, StringBuilder> map = openedFile.getNewUpdateMap();
