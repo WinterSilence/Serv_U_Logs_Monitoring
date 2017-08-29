@@ -1,0 +1,23 @@
+apply plugin: 'idea'
+
+apply plugin:'java'
+
+compileJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+	compile group: 'commons-net', name: 'commons-net', version: '1.4.0'
+}
+
+jar {
+    manifest {
+        attributes('Main-Class': 'myProject.Start')
+    }
+}
