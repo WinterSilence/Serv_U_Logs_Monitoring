@@ -97,7 +97,7 @@ public class WindowView implements View {
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170824";
+    private String title = "WorkProjectApp 20170828";
     private String selectedLogin = " All";
     private String searchText = "";
     private ArrayList<Task> selectedTasksSorted = new ArrayList<>();
@@ -122,7 +122,7 @@ public class WindowView implements View {
 
     public void startView(Stage stage) throws IOException {
         this.stage = stage;
-        root = FXMLLoader.load(getClass().getResource("WorkProjectApplication.fxml"));
+        root = FXMLLoader.load(getClass().getClassLoader().getResource("WorkProjectApplication.fxml"));
         Scene scene = new Scene(root, 1280, 720);
         stage.setTitle(title);
         stage.setScene(scene);
