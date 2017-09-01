@@ -1,5 +1,9 @@
 package myProject.view;
 
+import it.sauronsoftware.jave.AudioAttributes;
+import it.sauronsoftware.jave.Encoder;
+import it.sauronsoftware.jave.EncoderException;
+import it.sauronsoftware.jave.EncodingAttributes;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -27,6 +31,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
@@ -127,7 +132,6 @@ public class WindowView implements View {
         stage.setTitle(title);
         stage.setScene(scene);
         stage.show();
-
         init();
         setOpenMenuButton(stage);
         setExitMenuButton();
@@ -157,7 +161,6 @@ public class WindowView implements View {
         tableViewOnline = (TableView<Session>) splitPane.lookup("#tableViewOnline");
         tableViewRecently = (TableView<Task>) splitPane.lookup("#recentlyUploadedFiles");
         tableViewUploading = (TableView<Task>) splitPane.lookup("#uploadingFiles");
-
         startButton = (Button) anchorPaneRecently.lookup("#startButton");
         stopButton = (Button) anchorPaneRecently.lookup("#stopButton");
         FTPButton = (Button) anchorPaneRecently.lookup("#FTPbutton");
@@ -654,7 +657,6 @@ public class WindowView implements View {
             }
         });
 */
-
         tableViewRecently.setItems(FXCollections.observableArrayList(resultTableRecentlyFiles));
 
         if (resultTableRecentlyFiles.contains(focusedTask)) {
@@ -684,8 +686,19 @@ public class WindowView implements View {
         } else {
             tableViewRecently.getSelectionModel().focus(focusedIndex);
         }
-
         setRightStatusLabelText("Size - " + resultTableRecentlyFiles.size());
+    }
+
+    private void setSelectedCheckboxColumn() {
+        for (Task task : selectedTasksSorted) {
+            task.setCheckbox(true);
+        }
+    }
+
+    private void clearCheckboxColumn() {
+        for (Task task : tableViewRecently.getItems()) {
+            task.setCheckbox(false);
+        }
     }
 
     private List<Task> filterTaskListSelectedChoiceBox(List<Task> list) {
@@ -865,25 +878,62 @@ public class WindowView implements View {
 
     private void showRecentlyUploadedFiles() {
         TableColumn<Task, String> recentlyEndColumn =
-                (TableColumn<Task, String>) tableViewRecently.getColumns().get(0);
-        TableColumn<Task, String> recentlyFilenameColumn =
                 (TableColumn<Task, String>) tableViewRecently.getColumns().get(1);
-        TableColumn<Task, String> recentlySizeColumn =
+        TableColumn<Task, String> recentlyFilenameColumn =
                 (TableColumn<Task, String>) tableViewRecently.getColumns().get(2);
-        TableColumn<Task, String> recentlyStartColumn =
+        TableColumn<Task, String> recentlySizeColumn =
                 (TableColumn<Task, String>) tableViewRecently.getColumns().get(3);
-        TableColumn<Task, String> recentlySpeedColumn =
+        TableColumn<Task, String> recentlyStartColumn =
                 (TableColumn<Task, String>) tableViewRecently.getColumns().get(4);
-        TableColumn<Task, String> recentlyLoginColumn =
+        TableColumn<Task, String> recentlySpeedColumn =
                 (TableColumn<Task, String>) tableViewRecently.getColumns().get(5);
-        TableColumn<Task, String> recentlyFolderColumn =
+        TableColumn<Task, String> recentlyLoginColumn =
                 (TableColumn<Task, String>) tableViewRecently.getColumns().get(6);
+        TableColumn<Task, String> recentlyFolderColumn =
+                (TableColumn<Task, String>) tableViewRecently.getColumns().get(7);
+
+        recentlyStartColumn.setVisible(false);
+        recentlySpeedColumn.setVisible(false);
+        Label recentlyCheckBoxColumnLabel = new Label("□");
+        TableColumn<Task, Boolean> recentlyCheckBoxColumn = new TableColumn<>();
+        recentlyCheckBoxColumn.setGraphic(recentlyCheckBoxColumnLabel);
+        tableViewRecently.getColumns().set(0, recentlyCheckBoxColumn);
+        recentlyCheckBoxColumn.setSortable(false);
+        recentlyCheckBoxColumn.setResizable(false);
+        recentlyCheckBoxColumn.setMinWidth(30);
+        recentlyCheckBoxColumn.setPrefWidth(30);
+        recentlyCheckBoxColumn.setMaxWidth(30);
+        recentlyCheckBoxColumn.setStyle("-fx-alignment: CENTER;");
+
+        recentlyCheckBoxColumn.setCellValueFactory(new PropertyValueFactory<>("checkbox"));
+
+        recentlyCheckBoxColumn.setCellFactory(new Callback<TableColumn<Task, Boolean>, TableCell<Task, Boolean>>() {
+            @Override
+            public TableCell<Task, Boolean> call(TableColumn<Task, Boolean> param) {
+                return new CheckBoxTableCell<>();
+            }
+        });
+
+        recentlyCheckBoxColumnLabel.setOnMousePressed(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                if (event.isPrimaryButtonDown()) {
+                    System.out.println("click");
+                    for (Task task : selectedTasksSorted) {
+                        task.setCheckbox(false);
+                    }
+                }
+            }
+        });
+
+        tableViewRecently.setEditable(true);
 
         recentlyTaskChoiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 if (newValue != null) {
                     selectedLogin = newValue;
+                    clearCheckboxColumn();
                     update();
                 }
             }
@@ -910,17 +960,23 @@ public class WindowView implements View {
                             public void handle(MouseDragEvent event) {
                                 getTableView().getSelectionModel().select(getIndex());
                                 contextMenuRecentlyUploadedFiles(row1);
+                                clearCheckboxColumn();
                                 selectedTasksSorted.clear();
                                 selectedTasksSorted.addAll(getTableView().getSelectionModel().getSelectedItems());
+                                setSelectedCheckboxColumn();
                             }
                         });
-                        setOnMouseClicked(new EventHandler<MouseEvent>() {
+                        setOnMousePressed(new EventHandler<MouseEvent>() {
                             @Override
                             public void handle(MouseEvent event) {
                                 getTableView().getSelectionModel().select(getIndex());
+                                if (event.isPrimaryButtonDown() || !row1.getItem().checkboxProperty().get()) {
+                                    clearCheckboxColumn();
+                                }
                                 selectedTasksSorted.clear();
                                 selectedTasksSorted.addAll(getTableView().getSelectionModel().getSelectedItems());
                                 contextMenuRecentlyUploadedFiles(row1);
+                                setSelectedCheckboxColumn();
                             }
                         });
                     }
@@ -979,32 +1035,40 @@ public class WindowView implements View {
         MenuItem copyToCulture = new MenuItem("в ТК Культура");
         MenuItem copyToDezhchast = new MenuItem("в ДЧ");
         MenuItem copyToObmenUtro = new MenuItem("ДУРам");
-        MenuItem copyToUploadFolder = new MenuItem("Выберете папку ->");
+
+        Menu soundTo = new Menu("Извлечь звук в ->");
+        MenuItem soundToQuantel = new MenuItem("Quantel");
+        MenuItem soundToDalet = new MenuItem("Dalet");
+        MenuItem soundToFolder = new MenuItem("Выберете папку ->");
+
+        MenuItem copyToUploadFolder = new MenuItem("Копировать в ->");
         MenuItem openFolder = new MenuItem("Открыть папку с файлом");
 
         contextMenu.getItems().addAll(
                 inQuantel, inDalet, inAirManager, inDaletReserv,
                 quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToEMG,
-                copyToCulture, copyToDezhchast, copyToObmenUtro, copyToUploadFolder, openFolder);
+                copyToCulture, copyToDezhchast, copyToObmenUtro, /*soundTo,*/ copyToUploadFolder, openFolder);
+
+        soundTo.getItems().addAll(soundToQuantel, soundToDalet, soundToFolder);
 
         inQuantel.setOnAction(event1 -> {
             File folderTo = new File("\\\\ftpres\\quantel$\\");
-            fireCopyFiles(folderTo, "Quantel", selectedTasksSorted, true);
+            fireCopyFiles(folderTo, "Quantel", true);
         });
 
         inDalet.setOnAction(event1 -> {
             File folderTo = new File("\\\\rikrz\\dalet-in\\");
-            fireCopyFiles(folderTo, "Dalet основной", selectedTasksSorted, true);
+            fireCopyFiles(folderTo, "Dalet основной", true);
         });
 
         inAirManager.setOnAction(event1 -> {
             File folderTo = new File("\\\\vfs\\air-manager$\\");
-            fireCopyFiles(folderTo, "Air-manager", selectedTasksSorted, true);
+            fireCopyFiles(folderTo, "Air-manager", true);
         });
 
         inDaletReserv.setOnAction(event1 -> {
             File folderTo = new File("\\\\172.27.68.118\\storages\\CARBONCODER\\IN_FTP\\");
-            fireCopyFiles(folderTo, "Dalet Резерв", selectedTasksSorted, true);
+            fireCopyFiles(folderTo, "Dalet Резерв", true);
         });
 
         quantelNaPryamkiPC1.setOnAction(event1 -> {
@@ -1019,7 +1083,7 @@ public class WindowView implements View {
                 }
             }
             File folderTo = new File(currDateFolder.getAbsolutePath());
-            fireCopyFiles(folderTo, "PC1", selectedTasksSorted, false);
+            fireCopyFiles(folderTo, "PC1", false);
         });
 
         quantelNaPryamkiPC2.setOnAction(event1 -> {
@@ -1035,35 +1099,55 @@ public class WindowView implements View {
             }
 
             File folderTo = new File(currDateFolder.getAbsolutePath());
-            fireCopyFiles(folderTo, "PC2", selectedTasksSorted, false);
+            fireCopyFiles(folderTo, "PC2", false);
         });
 
         copyToEMG.setOnAction(event1 -> {
             File folderTo = new File("\\\\ftpres3\\emg$\\");
-            fireCopyFiles(folderTo, "EMG", selectedTasksSorted, false);
+            fireCopyFiles(folderTo, "EMG", false);
         });
 
         copyToCulture.setOnAction(event1 -> {
             File folderTo = new File("\\\\ftpres\\culture$\\");
-            fireCopyFiles(folderTo, "Культуру", selectedTasksSorted, true);
+            fireCopyFiles(folderTo, "Культуру", true);
         });
 
         copyToDezhchast.setOnAction(event1 -> {
             File folderTo = new File("\\\\ftpres\\upload\\upload_wan\\DezhChast\\");
-            fireCopyFiles(folderTo, "ДЧ", selectedTasksSorted, false);
+            fireCopyFiles(folderTo, "ДЧ", false);
         });
 
         copyToObmenUtro.setOnAction(event1 -> {
             File folderTo = new File("\\\\ftpres\\obmen-utro$\\for_moscow\\");
-            fireCopyFiles(folderTo, "ДУР", selectedTasksSorted, false);
+            fireCopyFiles(folderTo, "ДУР", false);
         });
+
+        soundToQuantel.setOnAction(event -> {
+            File folderTo = new File("\\\\ftpres\\quantel$\\");
+            encodeSound(folderTo, "Quantel (звук)", true);
+        });
+
+        soundToDalet.setOnAction(event -> {
+            File folderTo = new File("\\\\rikrz\\dalet-in\\");
+            encodeSound(folderTo, "Dalet (звук)", true);
+        });
+
+        soundToFolder.setOnAction(event -> {
+            DirectoryChooser directoryChooser = new DirectoryChooser();
+            directoryChooser.setInitialDirectory(new File("\\\\ftpres\\upload\\upload_wan\\"));
+            File folderTo = directoryChooser.showDialog(stage);
+            if (folderTo != null) {
+                encodeSound(folderTo, folderTo.getName(), false);
+            }
+        });
+
 
         copyToUploadFolder.setOnAction(event -> {
             DirectoryChooser directoryChooser = new DirectoryChooser();
             directoryChooser.setInitialDirectory(new File("\\\\ftpres\\upload\\upload_wan\\"));
             File folderTo = directoryChooser.showDialog(stage);
             if (folderTo != null) {
-                fireCopyFiles(folderTo, folderTo.getName(), selectedTasksSorted, false);
+                fireCopyFiles(folderTo, folderTo.getName(), false);
             }
         });
 
@@ -1072,13 +1156,68 @@ public class WindowView implements View {
                 Task focusTask = tableViewRecently.getItems()
                         .get(tableViewRecently.getSelectionModel().getFocusedIndex());
                 Desktop.getDesktop().open(new File(Helper.renameFolder(focusTask.getFolder())));
-                if (false) throw new IOException();
             } catch (IOException ex) {
                 Helper.log(ex);
             }
         });
 
         row.setContextMenu(contextMenu);
+    }
+
+    private void encodeSound(File folderTo, String text, boolean rename) {
+        List<Task> selected = new ArrayList<>();
+        for (Task task : tableViewRecently.getItems()) {
+            if (task.checkboxProperty().get()) {
+                selected.add(task);
+            }
+        }
+        for (Task task : selected) {
+            File folderFile = task.getUnitFile().getFile().getParentFile();
+            String pathToFolder = Helper.renameFolder(folderFile.getAbsolutePath().toLowerCase());
+            File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
+            File fileToTemp = new File("D:/video/temp/" +
+                    fileFrom.getName().replaceAll("\\.\\w*$", "") +
+                    ".wav");
+
+            File fileTo = rename ?
+                    new File((folderTo +
+                            File.separator +
+                            Helper.renameFromCirrilic(task.getFilename())).replaceAll("\\.\\w*$", "") +
+                            ".wav") :
+                    new File(folderTo +
+                            File.separator +
+                            task.getFilename().replaceAll("\\.\\w*$", "") +
+                            ".wav");
+            Helper.print("encodeSound method");
+            AudioAttributes audio = new AudioAttributes();
+            Helper.print("audioAttr");
+            audio.setCodec("pcm_s16le");
+            audio.setChannels(2);
+            audio.setSamplingRate(48000);
+
+            EncodingAttributes attrs = new EncodingAttributes();
+            attrs.setFormat("wav");
+            attrs.setAudioAttributes(audio);
+            Encoder encoder = new Encoder();
+
+            Thread encodeThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Helper.print("Start encode");
+                        encoder.encode(fileFrom, fileToTemp, attrs);
+                        Helper.print("End encode-Start Copy");
+                        fireCopyFile(fileToTemp, text, fileTo);
+                        Helper.print("End copy");
+                    } catch (EncoderException ex) {
+                        Helper.print(ex);
+                        Helper.log(ex);
+                    }
+                }
+            });
+            encodeThread.start();
+
+        }
     }
 
     private void fireCopyFile(File fileFrom, String text, File fileTo) {
@@ -1148,8 +1287,14 @@ public class WindowView implements View {
         });
     }
 
-    private void fireCopyFiles(File folderTo, String text, ArrayList<Task> selectedTasksSorted, boolean rename) {
-        for (Task task : selectedTasksSorted) {
+    private void fireCopyFiles(File folderTo, String text, boolean rename) {
+        List<Task> selected = new ArrayList<>();
+        for (Task task : tableViewRecently.getItems()) {
+            if (task.checkboxProperty().get()) {
+                selected.add(task);
+            }
+        }
+        for (Task task : selected) {
             File folderFile = task.getUnitFile().getFile().getParentFile();
             String pathToFolder = Helper.renameFolder(folderFile.getAbsolutePath().toLowerCase());
             File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
@@ -1372,8 +1517,6 @@ public class WindowView implements View {
             @Override
             public void handle(MouseEvent event) {
                 if (event.isPrimaryButtonDown()) {
-                    Helper.print("Left Button Clicked");
-
                     Dialog<Pair<String, String>> dialog = new Dialog<>();
                     dialog.setTitle("Ожидают окончания загрузки");
                     dialog.setHeaderText("");

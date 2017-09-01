@@ -1,6 +1,8 @@
 package myProject.model.data;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import myProject.Helper;
 
@@ -23,10 +25,19 @@ public class Task {
 
     // Implementation for JavaFX
     private final ObjectProperty<UnitFile> unitFile = new SimpleObjectProperty<>();
+    private final BooleanProperty checkbox = new SimpleBooleanProperty();
 
     public Task(String login, String IDSession) {
         this.login = login;
         this.IDSession = IDSession;
+    }
+
+    public BooleanProperty checkboxProperty() {
+        return checkbox;
+    }
+
+    public void setCheckbox(boolean checkbox) {
+        this.checkbox.set(checkbox);
     }
 
     public void startUpload(String data) {
@@ -51,7 +62,6 @@ public class Task {
             Helper.log(ex);
         }
 
-//        timeEnd = data.substring(17, 26);
         double intSpeed = Integer.parseInt(data
                 .substring(data.lastIndexOf("(") + 1, data.lastIndexOf(" KB/sec") - 3)
                 .replaceAll("\\D", "")) / 1024.0;

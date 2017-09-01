@@ -10,10 +10,12 @@ tasks.withType(JavaCompile) {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
-	compile group: 'commons-net', name: 'commons-net', version: '1.4.0'
+	compile group: 'commons-net', name: 'commons-net', version: '3.6'
+    compile group: 'jave', name: 'jave', version: '1.0.2'
 }
 
 jar {
