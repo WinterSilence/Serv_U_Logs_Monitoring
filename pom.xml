@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>myProject</groupId>
     <artifactId>WorkProject</artifactId>
-    <version>20170901</version>
+    <version>20170905</version>
 
     <dependencies>
         <dependency>
@@ -17,6 +17,8 @@
             <groupId>jave</groupId>
             <artifactId>jave</artifactId>
             <version>1.0.2</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/src/main/resources/jave-1.0.2.jar</systemPath>
         </dependency>
     </dependencies>
 
@@ -41,38 +43,11 @@
                 <configuration>
                     <archive>
                         <manifest>
-<!--                            <addClasspath>true</addClasspath>-->
-<!--                            <classpathPrefix>lib/</classpathPrefix>-->
                             <mainClass>myProject.Start</mainClass>
                         </manifest>
-<!--                        <manifestEntries>
-                            <Class-Path>lib/</Class-Path>
-                        </manifestEntries>-->
                     </archive>
                 </configuration>
             </plugin>
-
-<!--
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/classes/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
--->
         </plugins>
     </build>
 

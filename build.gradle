@@ -1,6 +1,6 @@
 apply plugin: 'idea'
 
-apply plugin:'java'
+apply plugin: 'java'
 
 compileJava.options.encoding = 'UTF-8'
 
@@ -10,11 +10,13 @@ tasks.withType(JavaCompile) {
 
 repositories {
     mavenCentral()
-    mavenLocal()
+    flatDir {
+        dirs 'src/main/resources'
+    }
 }
 
 dependencies {
-	compile group: 'commons-net', name: 'commons-net', version: '3.6'
+    compile group: 'commons-net', name: 'commons-net', version: '3.6'
     compile group: 'jave', name: 'jave', version: '1.0.2'
 }
 
@@ -22,5 +24,5 @@ jar {
     manifest {
         attributes('Main-Class': 'myProject.Start')
     }
-	version '20170901'
+    version '20170905'
 }

@@ -102,7 +102,7 @@ public class WindowView implements View {
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170901";
+    private String title = "WorkProjectApp 20170905";
     private String selectedLogin = " All";
     private String searchText = "";
     private ArrayList<Task> selectedTasksSorted = new ArrayList<>();
