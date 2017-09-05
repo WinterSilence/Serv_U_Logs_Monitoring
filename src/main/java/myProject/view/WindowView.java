@@ -941,6 +941,8 @@ public class WindowView implements View {
 
         tableViewRecently.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
+        tableViewRecently.setStyle("-fx-selection-bar: DODGERBLUE; -fx-selection-bar-non-focused: DEEPSKYBLUE;");
+
         tableViewRecently.setRowFactory(new Callback<TableView<Task>, TableRow<Task>>() {
             @Override
             public TableRow<Task> call(TableView<Task> tableView) {
@@ -970,7 +972,7 @@ public class WindowView implements View {
                             @Override
                             public void handle(MouseEvent event) {
                                 getTableView().getSelectionModel().select(getIndex());
-                                if (event.isPrimaryButtonDown() || !row1.getItem().checkboxProperty().get()) {
+                                if (event.isPrimaryButtonDown() || (row1.getItem() != null && !row1.getItem().checkboxProperty().get())) {
                                     clearCheckboxColumn();
                                 }
                                 selectedTasksSorted.clear();
@@ -979,18 +981,41 @@ public class WindowView implements View {
                                 setSelectedCheckboxColumn();
                             }
                         });
+                        setOnMouseClicked(event -> {
+                            if (event.getClickCount() == 2) {
+                                int focusedIndex = tableViewRecently.getSelectionModel().getFocusedIndex();
+                                Task focusedTask = null;
+                                if (focusedIndex >= 0) {
+                                    focusedTask = tableViewRecently.getItems().get(focusedIndex);
+                                    try {
+                                        Desktop.getDesktop().open(new File(Helper.renameFolder(focusedTask.getUnitFile().getFile().toString())));
+                                    } catch (IOException ex) {
+                                        Helper.log(ex);
+                                    }
+                                }
+                            }
+                        });
                     }
 
                     @Override
                     public void updateItem(Task task, boolean empty) {
                         if (!empty) {
-                            if (task.getTimeEndToString().equals("") || task.getTimeEnd().before(Helper.yesterday())) {
+                            if (task.getTimeEndToString().equals("")) {
+                                for (Node node : getChildren()) {
+                                    ((TableCell) node).setTextFill(Color.BLACK);
+                                    ((TableCell) node).setBackground(new Background(new BackgroundFill(Color.LIGHTPINK, new CornerRadii(2),
+                                            new Insets(0.0, 0.0, 0.0, 0.0))));
+                                }
+                            } else if (task.getTimeEnd().before(Helper.yesterday())) {
                                 for (Node node : getChildren()) {
                                     ((TableCell) node).setTextFill(Color.GREY);
+                                    ((TableCell) node).setBackground(new Background(new BackgroundFill(null, null,
+                                            null)));
                                 }
                             } else {
                                 for (Node node : getChildren()) {
                                     ((TableCell) node).setTextFill(Color.BLACK);
+                                    ((TableCell) node).setBackground(new Background(new BackgroundFill(null, null, null)));
                                 }
                             }
                         }
@@ -1024,6 +1049,7 @@ public class WindowView implements View {
     }
 
     private void contextMenuRecentlyUploadedFiles(TableRow<Task> row) {
+        if (row.getItem() == null) return;
         ContextMenu contextMenu = new ContextMenu();
         MenuItem inQuantel = new MenuItem("в Quantel");
         MenuItem inDalet = new MenuItem("в Dalet основной");
@@ -1039,6 +1065,7 @@ public class WindowView implements View {
         Menu soundTo = new Menu("Извлечь звук в ->");
         MenuItem soundToQuantel = new MenuItem("Quantel");
         MenuItem soundToDalet = new MenuItem("Dalet");
+        MenuItem soundToUtro = new MenuItem("ДУРам");
         MenuItem soundToFolder = new MenuItem("Выберете папку ->");
 
         MenuItem copyToUploadFolder = new MenuItem("Копировать в ->");
@@ -1047,9 +1074,24 @@ public class WindowView implements View {
         contextMenu.getItems().addAll(
                 inQuantel, inDalet, inAirManager, inDaletReserv,
                 quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToEMG,
-                copyToCulture, copyToDezhchast, copyToObmenUtro, /*soundTo,*/ copyToUploadFolder, openFolder);
+                copyToCulture, copyToDezhchast, copyToObmenUtro, soundTo);
+        soundTo.getItems().addAll(soundToQuantel, soundToDalet, soundToUtro, soundToFolder);
 
-        soundTo.getItems().addAll(soundToQuantel, soundToDalet, soundToFolder);
+        Task task = row.getItem();
+        boolean checkIfArchive = task.getFilename().endsWith(".rar") || task.getFilename().endsWith(".zip");
+        if (checkIfArchive) {
+            MenuItem unZIP = new MenuItem("Распаковать файл в ->");
+            contextMenu.getItems().add(unZIP);
+            unZIP.setOnAction(event -> {
+                DirectoryChooser directoryChooser = new DirectoryChooser();
+                directoryChooser.setInitialDirectory(new File("\\\\ftpres\\upload\\upload_wan\\"));
+                File folderTo = directoryChooser.showDialog(stage);
+                if (folderTo != null) {
+                    unZIP(folderTo.getAbsolutePath(), task);
+                }
+            });
+        }
+        contextMenu.getItems().addAll(copyToUploadFolder, openFolder);
 
         inQuantel.setOnAction(event1 -> {
             File folderTo = new File("\\\\ftpres\\quantel$\\");
@@ -1132,6 +1174,11 @@ public class WindowView implements View {
             encodeSound(folderTo, "Dalet (звук)", true);
         });
 
+        soundToUtro.setOnAction(event -> {
+            File folderTo = new File("\\\\ftpres\\obmen-utro$\\for_moscow\\");
+            encodeSound(folderTo, "Utro-Obmen (звук)", false);
+        });
+
         soundToFolder.setOnAction(event -> {
             DirectoryChooser directoryChooser = new DirectoryChooser();
             directoryChooser.setInitialDirectory(new File("\\\\ftpres\\upload\\upload_wan\\"));
@@ -1140,7 +1187,6 @@ public class WindowView implements View {
                 encodeSound(folderTo, folderTo.getName(), false);
             }
         });
-
 
         copyToUploadFolder.setOnAction(event -> {
             DirectoryChooser directoryChooser = new DirectoryChooser();
@@ -1155,13 +1201,29 @@ public class WindowView implements View {
             try {
                 Task focusTask = tableViewRecently.getItems()
                         .get(tableViewRecently.getSelectionModel().getFocusedIndex());
-                Desktop.getDesktop().open(new File(Helper.renameFolder(focusTask.getFolder())));
+                if (System.getProperty("os.name").startsWith("Windows")) {
+                    Runtime.getRuntime().exec("explorer.exe /select,"
+                            + Helper.renameFolder(focusTask.getUnitFile().getFile().getAbsolutePath()));
+                }
             } catch (IOException ex) {
                 Helper.log(ex);
             }
         });
 
         row.setContextMenu(contextMenu);
+    }
+
+    private void unZIP(String folderTo, Task task) {
+        if (!new File("C:\\Program Files\\WinRAR\\").isDirectory()) return;
+        String pathToFolder = Helper.renameFolder(task.getUnitFile().getFile().getParent().toLowerCase());
+        String fileFrom = pathToFolder + File.separator + task.getFilename();
+        String command = "C:\\Program Files\\WinRAR\\"
+                + "winrar x " + fileFrom + " " + folderTo;
+        try {
+            Runtime.getRuntime().exec(command);
+        } catch (IOException ex) {
+            Helper.log(ex);
+        }
     }
 
     private void encodeSound(File folderTo, String text, boolean rename) {
@@ -1188,9 +1250,7 @@ public class WindowView implements View {
                             File.separator +
                             task.getFilename().replaceAll("\\.\\w*$", "") +
                             ".wav");
-            Helper.print("encodeSound method");
             AudioAttributes audio = new AudioAttributes();
-            Helper.print("audioAttr");
             audio.setCodec("pcm_s16le");
             audio.setChannels(2);
             audio.setSamplingRate(48000);
@@ -1204,19 +1264,14 @@ public class WindowView implements View {
                 @Override
                 public void run() {
                     try {
-                        Helper.print("Start encode");
                         encoder.encode(fileFrom, fileToTemp, attrs);
-                        Helper.print("End encode-Start Copy");
                         fireCopyFile(fileToTemp, text, fileTo);
-                        Helper.print("End copy");
                     } catch (EncoderException ex) {
-                        Helper.print(ex);
                         Helper.log(ex);
                     }
                 }
             });
             encodeThread.start();
-
         }
     }
 
