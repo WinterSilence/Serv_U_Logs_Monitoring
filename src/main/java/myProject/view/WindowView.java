@@ -14,6 +14,7 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventTarget;
@@ -54,11 +55,11 @@ import myProject.model.data.Task;
 import myProject.model.data.UploadState;
 import myProject.model.infoFromFile.FileSourceFactory;
 import myProject.model.infoFromFile.FtpSource;
+import myProject.view.viewUtils.ReportUtils;
 
 import java.awt.*;
 import java.io.*;
-import java.nio.file.FileSystemException;
-import java.nio.file.Files;
+import java.nio.file.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
@@ -68,9 +69,12 @@ public class WindowView implements View {
     //75008042017
 
     private final int FILE_MENU = 0;
+    private final int TOOLS_MENU = 2;
 
-    private final int OPEN_BUTTON = 0;
-    private final int EXIT_BUTTON = 7;
+    private final int OPEN_MENUITEM = 0;
+    private final int EXIT_MENUITEM = 7;
+
+    private final int REPORT_MENUITEM = 0;
 
     private FXMLController fxmlController;
     private MyModel myModel;
@@ -102,7 +106,7 @@ public class WindowView implements View {
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170905";
+    private String title = "WorkProjectApp 20170909";
     private String selectedLogin = " All";
     private String searchText = "";
     private ArrayList<Task> selectedTasksSorted = new ArrayList<>();
@@ -191,9 +195,10 @@ public class WindowView implements View {
         startButtonText = (Label) anchorPaneRecently.lookup("#startButtonText");
         rightStatusLabel = (Label) hBox.lookup("#rightStatusLabel");
 
-        showOnlineSessions();
-        showUploadingFiles();
-        showRecentlyUploadedFiles();
+        initOnlineSessions();
+        initUploadingFiles();
+        initRecentlyUploadedFiles();
+        initReportMenu();
     }
 
     private void setOfflineProperty() {
@@ -297,14 +302,14 @@ public class WindowView implements View {
     private void setExitMenuButton() {
         MenuBar menuBar = (MenuBar) root.lookup("#menuBar");              // Menu Bar
         Menu menuFile = menuBar.getMenus().get(FILE_MENU);                        // File Menu
-        MenuItem exitButton = menuFile.getItems().get(EXIT_BUTTON);               // Exit Button
+        MenuItem exitButton = menuFile.getItems().get(EXIT_MENUITEM);               // Exit Button
         exitButton.setOnAction(event -> Platform.exit());
     }
 
     private void setOpenMenuButton(Stage stage) {
         MenuBar menuBar = (MenuBar) root.lookup("#menuBar");              // Menu Bar
         Menu menuFile = menuBar.getMenus().get(FILE_MENU);                        // File Menu
-        MenuItem openButton = menuFile.getItems().get(OPEN_BUTTON);               // Open Button
+        MenuItem openButton = menuFile.getItems().get(OPEN_MENUITEM);               // Open Button
         openButton.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
@@ -618,47 +623,9 @@ public class WindowView implements View {
             }
         });
 */
-        //todo Bugged, maybe later (text selection change color)
-/*
-        TableColumn<Task, String> recentlyFilenameColumn =
-                (TableColumn<Task, String>) tableViewRecently.getColumns().get(1);
-        recentlyFilenameColumn.setCellFactory(new Callback<TableColumn<Task, String>, TableCell<Task, String>>() {
-            @Override
-            public TableCell<Task, String> call(TableColumn<Task, String> param) {
-                return new TableCell<Task, String>() {
-                    @Override
-                    protected void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (item == null || empty) {
-                            setGraphic(null);
-                            setText(null);
-                            setStyle("");
-                        } else {
-
-                            setGraphic(null);
-                            if (!searchText.equals("") && item.toLowerCase().contains(searchText.toLowerCase())) {
-                                Text text1 = new Text(item);
-                                Text text2 = new Text(" -111");
-                                TextFlow buildTextFlow = new TextFlow(text1, text2);
-                                buildTextFlow.setTextAlignment(TextAlignment.CENTER);
-                                buildTextFlow.setPrefWidth(Region.USE_PREF_SIZE);
-                                buildTextFlow.setPrefHeight(Region.USE_PREF_SIZE);
-                                setGraphic(buildTextFlow);
-                                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-                            } else {
-                                setText(item);
-                                setTextFill(Color.BLACK);
-                                setStyle("");
-                                setContentDisplay(ContentDisplay.TEXT_ONLY);
-                            }
-                        }
-                    }
-                };
-            }
-        });
-*/
+        tableViewRecently.getColumns().get(0).setVisible(false);
+        tableViewRecently.getColumns().get(0).setVisible(true);
         tableViewRecently.setItems(FXCollections.observableArrayList(resultTableRecentlyFiles));
-
         if (resultTableRecentlyFiles.contains(focusedTask)) {
             focusedIndex = resultTableRecentlyFiles.indexOf(focusedTask);
         } else {
@@ -816,19 +783,14 @@ public class WindowView implements View {
                 return new TableRow<Session>() {
                     @Override
                     public void updateItem(Session session, boolean empty) {
-
+                        super.updateItem(session, empty);
                         if (!empty) {
                             if (session.getConnectionTime().before(Helper.yesterday())) {
-                                for (Node node : getChildren()) {
-                                    ((TableCell) node).setTextFill(Color.GREY);
-                                }
+                                setTextRowStyle(getChildren(), Color.GREY);
                             } else {
-                                for (Node node : getChildren()) {
-                                    ((TableCell) node).setTextFill(Color.BLACK);
-                                }
+                                setTextRowStyle(getChildren(), Color.BLACK);
                             }
                         }
-                        super.updateItem(session, empty);
                     }
                 };
 
@@ -853,7 +815,7 @@ public class WindowView implements View {
         });
     }
 
-    private void showOnlineSessions() {
+    private void initOnlineSessions() {
         TableColumn<Session, String> onlineConnectionTimeColumn =
                 (TableColumn<Session, String>) tableViewOnline.getColumns().get(0);
         TableColumn<Session, String> onlineLoginColumn =
@@ -876,7 +838,7 @@ public class WindowView implements View {
         onlineClientColumn.setStyle("-fx-alignment: CENTER;");
     }
 
-    private void showRecentlyUploadedFiles() {
+    private void initRecentlyUploadedFiles() {
         TableColumn<Task, String> recentlyEndColumn =
                 (TableColumn<Task, String>) tableViewRecently.getColumns().get(1);
         TableColumn<Task, String> recentlyFilenameColumn =
@@ -938,7 +900,6 @@ public class WindowView implements View {
                 }
             }
         });
-
         tableViewRecently.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         tableViewRecently.setStyle("-fx-selection-bar: DODGERBLUE; -fx-selection-bar-non-focused: DEEPSKYBLUE;");
@@ -999,27 +960,27 @@ public class WindowView implements View {
 
                     @Override
                     public void updateItem(Task task, boolean empty) {
+                        super.updateItem(task, empty);
                         if (!empty) {
                             if (task.getTimeEndToString().equals("")) {
-                                for (Node node : getChildren()) {
-                                    ((TableCell) node).setTextFill(Color.BLACK);
-                                    ((TableCell) node).setBackground(new Background(new BackgroundFill(Color.LIGHTPINK, new CornerRadii(2),
-                                            new Insets(0.0, 0.0, 0.0, 0.0))));
-                                }
+                                setTextRowStyle(getChildren(), Color.BLACK);
+                                setStyle("-fx-background-color: " +
+                                        "linear-gradient(#686868 0%, #232723 25%, #373837 75%, #757575 100%)," +
+                                        "linear-gradient(#020b02, #3a3a3a)," +
+                                        "linear-gradient(#b9b9b9 0%, #c2c2c2 20%, #afafaf 80%, #c8c8c8 100%)," +
+                                        "linear-gradient(#f5f5f5 0%, #dbdbdb 50%, #cacaca 51%, #d7d7d7 100%);" +
+                                        "-fx-background-radius: 9,8,5,4;"
+                                );
                             } else if (task.getTimeEnd().before(Helper.yesterday())) {
-                                for (Node node : getChildren()) {
-                                    ((TableCell) node).setTextFill(Color.GREY);
-                                    ((TableCell) node).setBackground(new Background(new BackgroundFill(null, null,
-                                            null)));
-                                }
+                                setTextRowStyle(getChildren(), Color.GREY);
+                                setStyle("");
                             } else {
-                                for (Node node : getChildren()) {
-                                    ((TableCell) node).setTextFill(Color.BLACK);
-                                    ((TableCell) node).setBackground(new Background(new BackgroundFill(null, null, null)));
-                                }
+                                setTextRowStyle(getChildren(), Color.BLACK);
+                                setStyle("-fx-font-weight: bold;");
                             }
+                        } else {
+                            setStyle("");
                         }
-                        super.updateItem(task, empty);
                     }
                 };
                 return row;
@@ -1046,6 +1007,12 @@ public class WindowView implements View {
 
         recentlyFolderColumn.setCellValueFactory(new PropertyValueFactory<>("folder"));
         recentlyFolderColumn.setStyle("-fx-alignment: CENTER;");
+    }
+
+    private void setTextRowStyle(ObservableList<Node> cells, Color color) {
+        for (Node node : cells) {
+            ((TableCell) node).setTextFill(color);
+        }
     }
 
     private void contextMenuRecentlyUploadedFiles(TableRow<Task> row) {
@@ -1360,7 +1327,7 @@ public class WindowView implements View {
         }
     }
 
-    private void showUploadingFiles() {
+    private void initUploadingFiles() {
         TableColumn<Task, String> uploadingStartTimeColumn =
                 (TableColumn<Task, String>) tableViewUploading.getColumns().get(0);
         TableColumn<Task, String> uploadingFilenameColumn =
@@ -1402,6 +1369,46 @@ public class WindowView implements View {
         });
     }
 
+    private void initReportMenu() {
+        MenuBar menuBar = (MenuBar) root.lookup("#menuBar");              // Menu Bar
+        Menu toolsMenu = menuBar.getMenus().get(TOOLS_MENU);                      // Tools Menu
+        MenuItem reportMenuItem = toolsMenu.getItems().get(REPORT_MENUITEM);      // Report Menu
+        reportMenuItem.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                ReportUtils.initFile();
+                System.out.println(ReportUtils.getDateInfo());
+                ReportUtils.writeInfoToFile(ReportUtils.getDateInfo());
+                String lastname1 = "Мережин";
+                ReportUtils.writeInfoToFile(lastname1);
+                String lastname2 = "Халиков";
+                ReportUtils.writeInfoToFile(lastname2);
+                System.out.println(ReportUtils.getCountOfFiles("\\\\FTPRES\\upload\\"));
+                ReportUtils.writeInfoToFile("Общее количество файлов - "
+                        + Integer.toString(ReportUtils.getCountOfFiles("\\\\FTPRES\\upload\\")));
+                ReportUtils.writeInfoToFile("Carbon - "
+                        + Integer.toString(ReportUtils.getCountOfFiles("\\\\rikrz\\dalet-out")));
+                ReportUtils.writeInfoToFile("Quantel - "
+                        + Integer.toString(ReportUtils.getCountOfFiles("\\\\ftpres\\quantel$")));
+
+                String PC1FolderYesterday = "\\\\172.18.0.184\\d$\\"
+                        + new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getYesterday800());
+                String PC1FolderToday = "\\\\172.18.0.184\\d$\\"
+                        + new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getToday800());
+                String PC2FolderYesterday = "\\\\172.18.0.183\\d$\\"
+                        + new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getYesterday800());
+                String PC2FolderToday = "\\\\172.18.0.183\\d$\\"
+                        + new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getToday800());
+
+                ReportUtils.writeInfoToFile("Quantel SDI - " + Integer.toString(
+                        ReportUtils.getCountOfFiles(PC1FolderYesterday)
+                                + ReportUtils.getCountOfFiles(PC1FolderToday)
+                                + ReportUtils.getCountOfFiles(PC2FolderYesterday)
+                                + ReportUtils.getCountOfFiles(PC2FolderToday)));
+            }
+        });
+    }
+
     private void contextMenuUploadingFiles(TableCell tableCell) {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem inQuantel = new MenuItem("в Quantel по прибытию");
@@ -1438,13 +1445,8 @@ public class WindowView implements View {
                 String PC1Address = "\\\\172.18.0.184\\d$\\";
                 String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
                 File currDateFolder = new File(PC1Address + currDateFolderPath);
-                if (!currDateFolder.exists()) {
-                    try {
-                        Files.createDirectories(currDateFolder.toPath());
-                    } catch (IOException ex) {
-                        Helper.log(ex);
-                    }
-                }
+
+                Helper.createCurrentDateFolder(currDateFolder);
 
                 File fileTo = new File(currDateFolder.getAbsolutePath() + File.separator
                         + task.getFilename());
@@ -1457,13 +1459,8 @@ public class WindowView implements View {
                 String PC2Address = "\\\\172.18.0.183\\d$\\";
                 String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
                 File currDateFolder = new File(PC2Address + currDateFolderPath);
-                if (!currDateFolder.exists()) {
-                    try {
-                        Files.createDirectories(currDateFolder.toPath());
-                    } catch (IOException ex) {
-                        Helper.log(ex);
-                    }
-                }
+
+                Helper.createCurrentDateFolder(currDateFolder);
 
                 File fileTo = new File(currDateFolder.getAbsolutePath() + File.separator
                         + task.getFilename());

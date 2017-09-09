@@ -168,4 +168,14 @@ public class Helper {
             return calendar1.get(Calendar.MONTH) - calendar2.get(Calendar.MONTH);
         return calendar1.get(Calendar.DAY_OF_MONTH) - calendar2.get(Calendar.DAY_OF_MONTH);
     }
+
+    public static void createCurrentDateFolder(File folder) {
+        if (!folder.exists()) {
+            try {
+                Files.createDirectories(folder.toPath());
+            } catch (IOException ex) {
+                Helper.log(ex);
+            }
+        }
+    }
 }

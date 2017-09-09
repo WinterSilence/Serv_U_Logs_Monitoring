@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>myProject</groupId>
     <artifactId>WorkProject</artifactId>
-    <version>20170905</version>
+    <version>20170909</version>
 
     <dependencies>
         <dependency>

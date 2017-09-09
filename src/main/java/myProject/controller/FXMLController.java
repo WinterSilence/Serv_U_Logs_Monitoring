@@ -61,11 +61,10 @@ public class FXMLController implements Controller {
                 startConnection.set(true);
                 myModel.setFileSource(fileSource);
                 myModel.initDefault();
-                view.update();
                 Calendar today = new GregorianCalendar();
 
                 while (!myModel.isOffline()) {
-                connected.set(true);
+                    connected.set(true);
                     Calendar checkDate = new GregorianCalendar();
                     if (Helper.comparingDays(today, checkDate) != 0) {
                         myModel.initDefault();
