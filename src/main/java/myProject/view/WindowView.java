@@ -1220,28 +1220,34 @@ public class WindowView implements View {
                             File.separator +
                             task.getFilename().replaceAll("\\.\\w*$", "") +
                             ".wav");
-            AudioAttributes audio = new AudioAttributes();
-            audio.setCodec("pcm_s16le");
-            audio.setChannels(2);
-            audio.setSamplingRate(48000);
+            try {
+                AudioAttributes audio = new AudioAttributes();
+                audio.setCodec("pcm_s16le");
+                audio.setChannels(2);
+                audio.setSamplingRate(48000);
 
-            EncodingAttributes attrs = new EncodingAttributes();
-            attrs.setFormat("wav");
-            attrs.setAudioAttributes(audio);
-            Encoder encoder = new Encoder();
+                EncodingAttributes attrs = new EncodingAttributes();
+                attrs.setFormat("wav");
+                attrs.setAudioAttributes(audio);
 
-            Thread encodeThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        encoder.encode(fileFrom, fileToTemp, attrs);
-                        fireCopyFile(fileToTemp, text, fileTo);
-                    } catch (EncoderException ex) {
-                        Helper.log(ex);
+                Encoder encoder = new Encoder();
+
+                Thread encodeThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            encoder.encode(fileFrom, fileToTemp, attrs);
+                            fireCopyFile(fileToTemp, text, fileTo);
+                        } catch (EncoderException ex) {
+                            Helper.log(ex);
+                        }
                     }
-                }
-            });
-            encodeThread.start();
+                });
+
+                encodeThread.start();
+            } catch (Throwable ex) {
+                Helper.log(ex);
+            }
         }
     }
 

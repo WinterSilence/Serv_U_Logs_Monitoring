@@ -16,13 +16,14 @@ repositories {
 }
 
 dependencies {
-    compile group: 'commons-net', name: 'commons-net', version: '3.6'
+//    compile group: 'commons-net', name: 'commons-net', version: '3.6'
     compile group: 'jave', name: 'jave', version: '1.0.2'
+    compile 'commons-net:commons-net:3.6'
 }
 
 jar {
     manifest {
         attributes('Main-Class': 'myProject.Start')
     }
-    version '20170912'
+    version '20170913'
 }
