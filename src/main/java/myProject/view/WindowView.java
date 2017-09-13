@@ -106,7 +106,7 @@ public class WindowView implements View {
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170909";
+    private String title = "WorkProjectApp 20170912";
     private String selectedLogin = " All";
     private String searchText = "";
     private ArrayList<Task> selectedTasksSorted = new ArrayList<>();
@@ -1148,10 +1148,13 @@ public class WindowView implements View {
 
         soundToFolder.setOnAction(event -> {
             DirectoryChooser directoryChooser = new DirectoryChooser();
-            directoryChooser.setInitialDirectory(new File("\\\\ftpres\\upload\\upload_wan\\"));
+            File initialDirectory = new File("\\\\ftpres\\upload\\upload_wan\\");
+            if (initialDirectory.exists() && initialDirectory.isDirectory()) {
+                directoryChooser.setInitialDirectory(initialDirectory);
+            }
             File folderTo = directoryChooser.showDialog(stage);
             if (folderTo != null) {
-                encodeSound(folderTo, folderTo.getName(), false);
+                encodeSound(folderTo, folderTo.getName() + " (звук)", false);
             }
         });
 
@@ -1204,7 +1207,7 @@ public class WindowView implements View {
             File folderFile = task.getUnitFile().getFile().getParentFile();
             String pathToFolder = Helper.renameFolder(folderFile.getAbsolutePath().toLowerCase());
             File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
-            File fileToTemp = new File("D:/video/temp/" +
+            File fileToTemp = new File(System.getProperty("java.io.tmpdir") +
                     fileFrom.getName().replaceAll("\\.\\w*$", "") +
                     ".wav");
 
