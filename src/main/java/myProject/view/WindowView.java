@@ -75,6 +75,7 @@ public class WindowView implements View {
     private final int EXIT_MENUITEM = 7;
 
     private final int REPORT_MENUITEM = 0;
+    private final int FFASTRANS_MENUITEM = 1;
 
     private FXMLController fxmlController;
     private MyModel myModel;
@@ -106,7 +107,9 @@ public class WindowView implements View {
 
     private ChoiceBox<String> recentlyTaskChoiceBox;
 
-    private String title = "WorkProjectApp 20170912";
+    private String title = "Serv_U Logs Monitoring (" +
+            new SimpleDateFormat("dd MMMM HH:mm:ss").format(new Date()) +
+            ")";
     private String selectedLogin = " All";
     private String searchText = "";
     private ArrayList<Task> selectedTasksSorted = new ArrayList<>();
@@ -1020,8 +1023,9 @@ public class WindowView implements View {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem inQuantel = new MenuItem("в Quantel");
         MenuItem inDalet = new MenuItem("в Dalet основной");
-        MenuItem inAirManager = new MenuItem("в Air-manager");
+        MenuItem inDaletFFAStrans = new MenuItem("в Dalet через FFAStrans");
         MenuItem inDaletReserv = new MenuItem("в Dalet через резерв");
+        MenuItem inAirManager = new MenuItem("в Air-manager");
         MenuItem quantelNaPryamkiPC1 = new MenuItem("в Quantel на PC1");
         MenuItem quantelNaPryamkiPC2 = new MenuItem("в Quantel на PC2");
         MenuItem copyToEMG = new MenuItem("в EMG");
@@ -1039,7 +1043,7 @@ public class WindowView implements View {
         MenuItem openFolder = new MenuItem("Открыть папку с файлом");
 
         contextMenu.getItems().addAll(
-                inQuantel, inDalet, inAirManager, inDaletReserv,
+                inQuantel, inDalet, inDaletFFAStrans, inDaletReserv, inAirManager,
                 quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToEMG,
                 copyToCulture, copyToDezhchast, copyToObmenUtro, soundTo);
         soundTo.getItems().addAll(soundToQuantel, soundToDalet, soundToUtro, soundToFolder);
@@ -1070,15 +1074,21 @@ public class WindowView implements View {
             fireCopyFiles(folderTo, "Dalet основной", true);
         });
 
-        inAirManager.setOnAction(event1 -> {
-            File folderTo = new File("\\\\vfs\\air-manager$\\");
-            fireCopyFiles(folderTo, "Air-manager", true);
+        inDaletFFAStrans.setOnAction(event1 -> {
+            File folderTo = new File("\\\\rikrz\\e$\\coder_folder\\ff-dalet-in\\");
+            fireCopyFiles(folderTo, "Dalet FFAStrans", true);
         });
 
         inDaletReserv.setOnAction(event1 -> {
             File folderTo = new File("\\\\172.27.68.118\\storages\\CARBONCODER\\IN_FTP\\");
             fireCopyFiles(folderTo, "Dalet Резерв", true);
         });
+
+        inAirManager.setOnAction(event1 -> {
+            File folderTo = new File("\\\\vfs\\air-manager$\\");
+            fireCopyFiles(folderTo, "Air-manager", true);
+        });
+
 
         quantelNaPryamkiPC1.setOnAction(event1 -> {
             String PC1Address = "\\\\172.18.0.184\\d$\\";
@@ -1379,9 +1389,10 @@ public class WindowView implements View {
     }
 
     private void initReportMenu() {
-        MenuBar menuBar = (MenuBar) root.lookup("#menuBar");              // Menu Bar
-        Menu toolsMenu = menuBar.getMenus().get(TOOLS_MENU);                      // Tools Menu
-        MenuItem reportMenuItem = toolsMenu.getItems().get(REPORT_MENUITEM);      // Report Menu
+        MenuBar menuBar = (MenuBar) root.lookup("#menuBar");               // Menu Bar
+        Menu toolsMenu = menuBar.getMenus().get(TOOLS_MENU);                       // Tools Menu
+        MenuItem reportMenuItem = toolsMenu.getItems().get(REPORT_MENUITEM);       // Report Menu
+        MenuItem ffastransMenuItem = toolsMenu.getItems().get(FFASTRANS_MENUITEM); // FFAStrans Menu
         reportMenuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -1393,27 +1404,39 @@ public class WindowView implements View {
                 String lastname2 = "Халиков";
                 ReportUtils.writeInfoToFile(lastname2);
                 System.out.println(ReportUtils.getCountOfFiles("\\\\FTPRES\\upload\\"));
-                ReportUtils.writeInfoToFile("Общее количество файлов - "
-                        + Integer.toString(ReportUtils.getCountOfFiles("\\\\FTPRES\\upload\\")));
-                ReportUtils.writeInfoToFile("Carbon - "
-                        + Integer.toString(ReportUtils.getCountOfFiles("\\\\rikrz\\dalet-out")));
-                ReportUtils.writeInfoToFile("Quantel - "
-                        + Integer.toString(ReportUtils.getCountOfFiles("\\\\ftpres\\quantel$")));
+                ReportUtils.writeInfoToFile("Общее количество файлов - " +
+                        Integer.toString(ReportUtils.getCountOfFiles("\\\\FTPRES\\upload\\")));
+                ReportUtils.writeInfoToFile("Carbon - " +
+                        Integer.toString(ReportUtils.getCountOfFiles("\\\\rikrz\\dalet-out")));
+                ReportUtils.writeInfoToFile("FFAStrans - " +
+                        Integer.toString(ReportUtils.getCountOfFiles("\\\\rikrz\\e$\\coder_folder\\ff-dalet-in")));
+                ReportUtils.writeInfoToFile("Quantel - " +
+                        Integer.toString(ReportUtils.getCountOfFiles("\\\\ftpres\\quantel$")));
 
-                String PC1FolderYesterday = "\\\\172.18.0.184\\d$\\"
-                        + new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getYesterday800());
-                String PC1FolderToday = "\\\\172.18.0.184\\d$\\"
-                        + new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getToday800());
-                String PC2FolderYesterday = "\\\\172.18.0.183\\d$\\"
-                        + new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getYesterday800());
-                String PC2FolderToday = "\\\\172.18.0.183\\d$\\"
-                        + new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getToday800());
+                String PC1FolderYesterday = "\\\\172.18.0.184\\d$\\" +
+                        new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getYesterday800());
+                String PC1FolderToday = "\\\\172.18.0.184\\d$\\" +
+                        new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getToday800());
+                String PC2FolderYesterday = "\\\\172.18.0.183\\d$\\" +
+                        new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getYesterday800());
+                String PC2FolderToday = "\\\\172.18.0.183\\d$\\" +
+                        new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getToday800());
 
-                ReportUtils.writeInfoToFile("Quantel SDI - " + Integer.toString(
-                        ReportUtils.getCountOfFiles(PC1FolderYesterday)
-                                + ReportUtils.getCountOfFiles(PC1FolderToday)
-                                + ReportUtils.getCountOfFiles(PC2FolderYesterday)
-                                + ReportUtils.getCountOfFiles(PC2FolderToday)));
+                ReportUtils.writeInfoToFile("Quantel SDI - " +
+                        Integer.toString(ReportUtils.getCountOfFiles(PC1FolderYesterday) +
+                                ReportUtils.getCountOfFiles(PC1FolderToday) +
+                                ReportUtils.getCountOfFiles(PC2FolderYesterday) +
+                                ReportUtils.getCountOfFiles(PC2FolderToday)));
+            }
+        });
+        ffastransMenuItem.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                try {
+                    Desktop.getDesktop().open(new File("\\\\rikrz\\e$\\FFAStrans0.8.1\\Processors\\status_monitor.exe"));
+                } catch (IOException ex) {
+                    Helper.log(ex);
+                }
             }
         });
     }
@@ -1422,6 +1445,7 @@ public class WindowView implements View {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem inQuantel = new MenuItem("в Quantel по прибытию");
         MenuItem inDalet = new MenuItem("в Dalet основной по прибытию");
+        MenuItem inDaletFFAStrans = new MenuItem("в Dalet FFAStrans по прибытию");
         MenuItem quantelNaPryamkiPC1 = new MenuItem("в Quantel на PC1 по прибытию");
         MenuItem quantelNaPryamkiPC2 = new MenuItem("в Quantel на PC2 по прибытию");
         MenuItem copyToCulture = new MenuItem("в ТК Культура по прибытию");
@@ -1429,7 +1453,7 @@ public class WindowView implements View {
         MenuItem copyToUploadFolder = new MenuItem("Выберете папку для копирования по прибытию:");
         MenuItem openFolder = new MenuItem("Открыть папку с файлом");
 
-        contextMenu.getItems().addAll(inQuantel, inDalet,
+        contextMenu.getItems().addAll(inQuantel, inDalet, inDaletFFAStrans,
                 quantelNaPryamkiPC1, quantelNaPryamkiPC2, copyToCulture, copyToDezhchast, copyToUploadFolder, openFolder);
         tableCell.setContextMenu(contextMenu);
         Task task = (Task) tableCell.getTableRow().getItem();
@@ -1448,6 +1472,12 @@ public class WindowView implements View {
                 String rikrzFolderPath = "\\\\rikrz\\dalet-in\\";
                 File fileTo = new File(rikrzFolderPath + Helper.renameFromCirrilic(task.getFilename()));
                 fireCopyFileOnComplete(fileFrom, fileTo, "в Dalet основной");
+            });
+
+            inDaletFFAStrans.setOnAction(event1 -> {
+                String rikrzFolderPath = "\\\\rikrz\\e$\\coder_folder\\ff-dalet-in";
+                File fileTo = new File(rikrzFolderPath + Helper.renameFromCirrilic(task.getFilename()));
+                fireCopyFileOnComplete(fileFrom, fileTo, "в Dalet FFASTrans основной");
             });
 
             quantelNaPryamkiPC1.setOnAction(event1 -> {

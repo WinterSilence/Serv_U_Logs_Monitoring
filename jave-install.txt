@@ -1,1 +1,1 @@
-mvn install:install-file -Dfile=D:\am\WorkProject\src\main\resources\jave-1.0.2.jar -DgroupId=jave -DartifactId=jave -Dversion=1.0.2 -Dpackaging=jar
+mvn install:install-file -Dfile=${project.basedir}\src\main\resources\jave-1.0.2.jar -DgroupId=jave -DartifactId=jave -Dversion=1.0.2 -Dpackaging=jar

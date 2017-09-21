@@ -25,5 +25,5 @@ jar {
     manifest {
         attributes('Main-Class': 'myProject.Start')
     }
-    version '20170913'
+    version '20170921'
 }
