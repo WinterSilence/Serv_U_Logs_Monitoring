@@ -1159,7 +1159,8 @@ public class WindowView implements View {
         soundToFolder.setOnAction(event -> {
             DirectoryChooser directoryChooser = new DirectoryChooser();
             File initialDirectory = new File("\\\\ftpres\\upload\\upload_wan\\");
-            if (initialDirectory.exists() && initialDirectory.isDirectory()) {
+            if (initialDirectory.canRead() && initialDirectory.canExecute() &&
+                    initialDirectory.exists() && initialDirectory.isDirectory()) {
                 directoryChooser.setInitialDirectory(initialDirectory);
             }
             File folderTo = directoryChooser.showDialog(stage);
@@ -1170,10 +1171,20 @@ public class WindowView implements View {
 
         copyToUploadFolder.setOnAction(event -> {
             DirectoryChooser directoryChooser = new DirectoryChooser();
-            directoryChooser.setInitialDirectory(new File("\\\\ftpres\\upload\\upload_wan\\"));
-            File folderTo = directoryChooser.showDialog(stage);
-            if (folderTo != null) {
-                fireCopyFiles(folderTo, folderTo.getName(), false);
+            File initialDirectory = new File("\\\\ftpres\\upload\\upload_wan\\");
+            if (initialDirectory.canRead() && initialDirectory.canExecute() &&
+                    initialDirectory.exists() && initialDirectory.isDirectory()) {
+                directoryChooser.setInitialDirectory(initialDirectory);
+                File folderTo = directoryChooser.showDialog(stage);
+                if (folderTo != null) {
+                    fireCopyFiles(folderTo, folderTo.getName(), false);
+                }
+            } else {
+                try {
+                    throw new FileNotFoundException();
+                } catch (FileNotFoundException ex) {
+                    Helper.log(ex);
+                }
             }
         });
 
