@@ -1,0 +1,13 @@
+/* Selected row */
+.table-view:focused .table-row-cell:filled:selected {
+    -fx-background-color: rgba(0,191,255,0.5);
+    -fx-background-insets: 0, 1, 2;
+    -fx-background: -fx-accent;
+}
+
+/* Selected row when table not focused */
+.table-row-cell:filled:selected {
+    -fx-background-color: rgba(0,191,255,0.2);
+    -fx-background-insets: 0, 1, 2;
+    -fx-background: -fx-accent;
+}

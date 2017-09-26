@@ -1,6 +1,0 @@
-.table-view .table-row-cell:hover{
-	-fx-background-color: yellow;
-}
-.table-row-cell:even{
-	-fx-background-color: lightgreen;
-}

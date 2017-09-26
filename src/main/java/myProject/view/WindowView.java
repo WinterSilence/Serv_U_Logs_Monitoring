@@ -905,7 +905,7 @@ public class WindowView implements View {
         });
         tableViewRecently.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        tableViewRecently.setStyle("-fx-selection-bar: DODGERBLUE; -fx-selection-bar-non-focused: DEEPSKYBLUE;");
+        tableViewRecently.getStylesheets().add("css/tableViewRecently.css");
 
         tableViewRecently.setRowFactory(new Callback<TableView<Task>, TableRow<Task>>() {
             @Override
@@ -966,16 +966,10 @@ public class WindowView implements View {
                         super.updateItem(task, empty);
                         if (!empty) {
                             if (task.getTimeEndToString().equals("")) {
-                                setTextRowStyle(getChildren(), Color.BLACK);
-                                setStyle("-fx-background-color: " +
-                                        "linear-gradient(#686868 0%, #232723 25%, #373837 75%, #757575 100%)," +
-                                        "linear-gradient(#020b02, #3a3a3a)," +
-                                        "linear-gradient(#b9b9b9 0%, #c2c2c2 20%, #afafaf 80%, #c8c8c8 100%)," +
-                                        "linear-gradient(#f5f5f5 0%, #dbdbdb 50%, #cacaca 51%, #d7d7d7 100%);" +
-                                        "-fx-background-radius: 9,8,5,4;"
-                                );
-                            } else if (task.getTimeEnd().before(Helper.yesterday())) {
                                 setTextRowStyle(getChildren(), Color.GREY);
+                                setStyle("");
+                            } else if (task.getTimeEnd().before(Helper.yesterday())) {
+                                setTextRowStyle(getChildren(), Color.BLACK);
                                 setStyle("");
                             } else {
                                 setTextRowStyle(getChildren(), Color.BLACK);
@@ -1174,11 +1168,13 @@ public class WindowView implements View {
             File initialDirectory = new File("\\\\ftpres\\upload\\upload_wan\\");
             if (initialDirectory.canRead() && initialDirectory.canExecute() &&
                     initialDirectory.exists() && initialDirectory.isDirectory()) {
+                Helper.writeLog("Copy ToFolder start! (" + new SimpleDateFormat("dd.MM HH:mm:ss").format(new Date()) + ")");
                 directoryChooser.setInitialDirectory(initialDirectory);
                 File folderTo = directoryChooser.showDialog(stage);
                 if (folderTo != null) {
                     fireCopyFiles(folderTo, folderTo.getName(), false);
                 }
+                Helper.writeLog("Copy ToFolder end! - \"" + folderTo + "\" (" + new SimpleDateFormat("dd.MM HH:mm:ss").format(new Date()) + ")");
             } else {
                 try {
                     throw new FileNotFoundException();
@@ -1208,8 +1204,8 @@ public class WindowView implements View {
         if (!new File("C:\\Program Files\\WinRAR\\").isDirectory()) return;
         String pathToFolder = Helper.renameFolder(task.getUnitFile().getFile().getParent().toLowerCase());
         String fileFrom = pathToFolder + File.separator + task.getFilename();
-        String command = "C:\\Program Files\\WinRAR\\"
-                + "winrar x " + fileFrom + " " + folderTo;
+        String command = "\"C:\\Program Files\\WinRAR\\"
+                + "winrar\" x \"" + fileFrom + "\" \"" + folderTo + "\"";
         try {
             Runtime.getRuntime().exec(command);
         } catch (IOException ex) {
@@ -1397,6 +1393,8 @@ public class WindowView implements View {
                 }
             }
         });
+
+        tableViewUploading.getStylesheets().add("css/tableViewUploading.css");
     }
 
     private void initReportMenu() {

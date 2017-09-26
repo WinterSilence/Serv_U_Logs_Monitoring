@@ -136,7 +136,6 @@ public class Helper {
 
     public static void print(Object object) {
         System.out.println(object);
-        writeLog(object.toString());
     }
 
     private static void writeToFileFromConsole(Object object) {
