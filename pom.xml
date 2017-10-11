@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>myProject</groupId>
     <artifactId>WorkProject</artifactId>
-    <version>20170927</version>
+    <version>20171011</version>
     <dependencies>
         <dependency>
             <groupId>commons-net</groupId>
@@ -16,6 +16,12 @@
             <groupId>jave</groupId>
             <artifactId>jave</artifactId>
             <version>1.0.2</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/commons-configuration/commons-configuration -->
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.10</version>
         </dependency>
     </dependencies>
     <build>
@@ -67,12 +73,37 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.4.3</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <!-- here the phase you need -->
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources</directory>
+                                    <include>default.properties</include>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
                 <excludes>
                     <exclude>**/*.jar</exclude>
+                    <exclude>default.properties</exclude>
                 </excludes>
             </resource>
         </resources>

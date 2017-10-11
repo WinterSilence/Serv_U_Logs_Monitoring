@@ -1,8 +1,11 @@
 package myProject;
 
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -11,6 +14,8 @@ import java.util.GregorianCalendar;
 public class Helper {
     private static final char[][] charTable = new char[65536][];
     private static File folder = new File("log");
+    private static PropertiesConfiguration properties = new PropertiesConfiguration();
+    private static PropertiesConfiguration defaultProperties = new PropertiesConfiguration();
 
     static {
         if (!folder.exists() || !folder.isDirectory()) {
@@ -177,5 +182,37 @@ public class Helper {
                 Helper.log(ex);
             }
         }
+    }
+    public static PropertiesConfiguration getProperties() {
+        String userTempDir = System.getProperty("java.io.tmpdir");
+        File propertiesFile = new File(userTempDir + File.separator + "workProjectProp" + File.separator + "wp.properties");
+        if (!propertiesFile.exists()) {
+            try {
+                File propertyFile = new File("default.properties");
+                File propertyFileDefault = new File("src/main/resources/default.properties");
+                if (!propertyFile.exists()) {
+                    propertyFile = propertyFileDefault;
+                }
+                if (!propertiesFile.getParentFile().exists()) {
+                    Files.createDirectories(propertiesFile.getParentFile().toPath());
+                }
+
+                transferFile(propertyFile, propertiesFile);
+            } catch (IOException ex) {
+                log(ex);
+            }
+        }
+        properties.setFile(propertiesFile);
+        return properties;
+    }
+
+    public static PropertiesConfiguration getDefaultProperties() {
+        File defaultPropertyFile = new File("default.properties");
+        File propertyFileDefault = new File("src/main/resources/default.properties");
+        if (!defaultPropertyFile.exists()) {
+            defaultPropertyFile = propertyFileDefault;
+        }
+        defaultProperties.setFile(defaultPropertyFile);
+        return defaultProperties;
     }
 }

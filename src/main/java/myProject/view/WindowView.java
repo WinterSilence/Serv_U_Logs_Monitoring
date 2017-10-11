@@ -55,7 +55,10 @@ import myProject.model.data.Task;
 import myProject.model.data.UploadState;
 import myProject.model.infoFromFile.FileSourceFactory;
 import myProject.model.infoFromFile.FtpSource;
+import myProject.view.viewUtils.MyCustomColors;
 import myProject.view.viewUtils.ReportUtils;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 
 import java.awt.*;
 import java.io.*;
@@ -67,6 +70,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class WindowView implements View {
     //75008042017
+
+    private final PropertiesConfiguration properties = Helper.getProperties();
+    private final PropertiesConfiguration defaultProperties = Helper.getDefaultProperties();
 
     private final int FILE_MENU = 0;
     private final int TOOLS_MENU = 2;
@@ -90,6 +96,7 @@ public class WindowView implements View {
     private VBox vBox;
     private HBox hBox;
     private AnchorPane anchorPaneRecently;
+    private AnchorPane anchorPaneUploadingFiles;
 
     private Button startButton;
     private Button stopButton;
@@ -120,6 +127,8 @@ public class WindowView implements View {
     // Отображение Онлайн сессий и пришедших файлов за checkHours часов
     // default value = 48
     private int checkHours = 48;
+    private boolean isDay;
+
     private Stage stage;
 
     private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM");
@@ -133,6 +142,7 @@ public class WindowView implements View {
     }
 
     public void startView(Stage stage) throws IOException {
+        initProperties();
         this.stage = stage;
         root = FXMLLoader.load(getClass().getClassLoader().getResource("WorkProjectApplication.fxml"));
         Scene scene = new Scene(root, 1280, 720);
@@ -140,6 +150,7 @@ public class WindowView implements View {
         stage.setScene(scene);
         stage.show();
         init();
+        setDayNightButton();
         setOpenMenuButton(stage);
         setExitMenuButton();
         setStartButton();
@@ -156,6 +167,7 @@ public class WindowView implements View {
         setOfflineProperty();
         setCopyAfterInfoLabel();
         setStartCircleAndStopButton();
+        setStylesheets();
     }
 
     private void init() {
@@ -164,6 +176,7 @@ public class WindowView implements View {
         hBox = (HBox) vBox.lookup("#HBox");
 
         anchorPaneRecently = (AnchorPane) splitPane.lookup("#anchorPaneRecently");
+        anchorPaneUploadingFiles = (AnchorPane) splitPane.lookup("#anchorPaneUploadingFiles");
 
         tableViewOnline = (TableView<Session>) splitPane.lookup("#tableViewOnline");
         tableViewRecently = (TableView<Task>) splitPane.lookup("#recentlyUploadedFiles");
@@ -197,11 +210,57 @@ public class WindowView implements View {
 
         startButtonText = (Label) anchorPaneRecently.lookup("#startButtonText");
         rightStatusLabel = (Label) hBox.lookup("#rightStatusLabel");
+        isDay = properties.getBoolean("isDay");
 
         initOnlineSessions();
         initUploadingFiles();
         initRecentlyUploadedFiles();
         initReportMenu();
+    }
+
+    private void initProperties() {
+        try {
+            defaultProperties.load();
+            properties.load();
+            System.out.println("initProp complete");
+        } catch (ConfigurationException ex) {
+            Helper.log(ex);
+        }
+
+    }
+
+    private void setDayNightButton() {
+        Button dayNightButton = (Button) anchorPaneUploadingFiles.lookup("#dayNightButton");
+        String dayNight = properties.getProperty("isDay").equals("true") ? "DAY" : "NIGHT";
+        dayNightButton.setText(dayNight);
+        dayNightButton.setOnAction(event -> {
+            isDay = properties.getBoolean("isDay");
+            try {
+                if (isDay) {
+                    dayNightButton.setText("NIGHT");
+                    properties.setProperty("isDay", "false");
+                    properties.setProperty("rootCSS", "css/night/root_night.css");
+                    properties.save();
+                } else {
+                    dayNightButton.setText("DAY");
+                    properties.setProperty("isDay", "true");
+                    properties.setProperty("rootCSS", "css/day/root.css");
+                    properties.save();
+                }
+                isDay = !isDay;
+                setStylesheets();
+                update();
+            } catch (ConfigurationException ex) {
+                Helper.log(ex);
+            }
+        });
+    }
+
+    private void setStylesheets() {
+        root.getStylesheets().clear();
+        root.getStylesheets().add(Helper.getProperties().getString("rootCSS"));
+        MyCustomColors.setTodayTextRowColor(isDay ? Color.BLACK : Color.WHITE);
+        MyCustomColors.setYesterdayTextRowColor(isDay ? Color.BLACK : Color.ANTIQUEWHITE);
     }
 
     private void setOfflineProperty() {
@@ -210,6 +269,7 @@ public class WindowView implements View {
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                 if (newValue) {
                 } else {
+                    //todo
 //                    setStartCircle(Color.RED);
                     startButtonText.setVisible(true);
                     startButton.setDisable(false);
@@ -239,7 +299,6 @@ public class WindowView implements View {
     }
 
     private void setHideShowSessionTable() {
-        AnchorPane anchorPaneUploadingFiles = (AnchorPane) splitPane.lookup("#anchorPaneUploadingFiles");
         Button hideShowSessionTableButton = (Button) anchorPaneUploadingFiles.lookup("#hideShowSessionTableButton");
         AnchorPane anchorPaneTableViewOnline = (AnchorPane) splitPane.lookup("#anchorPaneTableViewOnline");
 
@@ -330,6 +389,8 @@ public class WindowView implements View {
 
     private void setStartButton() {
         startButton.setOnAction(event -> {
+            createCurrentDateFolder(defaultProperties.getString("pc1Folder"));
+            createCurrentDateFolder(defaultProperties.getString("pc2Folder"));
             fxmlController.establishConnection(FileSourceFactory.createShareSource());
             startButtonText.setVisible(false);
             startButton.setDisable(true);
@@ -337,6 +398,18 @@ public class WindowView implements View {
             todayButton.setDisable(true);
             yesterdayButton.setDisable(true);
         });
+    }
+
+    private void createCurrentDateFolder(String where) {
+        String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
+        File currDateFolder = new File(where + currDateFolderPath);
+        if (!currDateFolder.exists()) {
+            try {
+                Files.createDirectories(currDateFolder.toPath());
+            } catch (IOException ex) {
+                Helper.log(ex);
+            }
+        }
     }
 
     private void setStopButton() {
@@ -562,14 +635,14 @@ public class WindowView implements View {
         TreeSet<String> recentFilesLoginUpdate = new TreeSet<>();
         for (Task task : resultTableRecentlyFiles) {
             recentFilesLoginUpdate.add(task.getLogin());
-            if (task.getFolder().endsWith("upload_wan\\DezhChast")) {
+            if (task.getFolder().equals(defaultProperties.getString("localPathToDezhChast"))) {
                 recentFilesLoginUpdate.add("Dezhchast");
             }
-
-            if (task.getFolder().endsWith("obmen-utro\\for_moscow\\Vesti_utro")) {
+// todo test!!!
+            if (task.getFolder().equals(defaultProperties.getString("localPathToDU") + "\\Vesti_utro")) {
+                System.out.println(task.getFolder());
                 recentFilesLoginUpdate.add("Utro-obmen");
             }
-
         }
         recentFilesLoginUpdate.add(" All");
 
@@ -676,7 +749,7 @@ public class WindowView implements View {
         List<Task> result = new ArrayList<>();
         if (selectedLogin.equals("Dezhchast")) {
             for (Task task : list) {
-                if (task.getFolder().endsWith("upload_wan\\DezhChast")) {
+                if (task.getFolder().equals(defaultProperties.getString("localPathToDezhChast"))) {
                     result.add(task);
                 }
             }
@@ -684,7 +757,8 @@ public class WindowView implements View {
         }
         if (selectedLogin.equals("Utro-obmen")) {
             for (Task task : list) {
-                if (task.getFolder().endsWith("obmen-utro\\for_moscow\\Vesti_utro")) {
+// todo need test!!!
+                if (task.getFolder().equals(defaultProperties.getString("localPathToDU") + "\\Vesti_utro")) {
                     result.add(task);
                 }
             }
@@ -789,9 +863,9 @@ public class WindowView implements View {
                         super.updateItem(session, empty);
                         if (!empty) {
                             if (session.getConnectionTime().before(Helper.yesterday())) {
-                                setTextRowStyle(getChildren(), Color.GREY);
+                                setTextRowStyle(getChildren(), MyCustomColors.getYesterdayTextRowColor());
                             } else {
-                                setTextRowStyle(getChildren(), Color.BLACK);
+                                setTextRowStyle(getChildren(), MyCustomColors.getTodayTextRowColor());
                             }
                         }
                     }
@@ -885,6 +959,7 @@ public class WindowView implements View {
                 if (event.isPrimaryButtonDown()) {
                     System.out.println("click");
                     for (Task task : selectedTasksSorted) {
+// todo clear checkbox!!!
                         task.setCheckbox(false);
                     }
                 }
@@ -905,7 +980,6 @@ public class WindowView implements View {
         });
         tableViewRecently.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        tableViewRecently.getStylesheets().add("css/tableViewRecently.css");
 
         tableViewRecently.setRowFactory(new Callback<TableView<Task>, TableRow<Task>>() {
             @Override
@@ -969,10 +1043,10 @@ public class WindowView implements View {
                                 setTextRowStyle(getChildren(), Color.GREY);
                                 setStyle("");
                             } else if (task.getTimeEnd().before(Helper.yesterday())) {
-                                setTextRowStyle(getChildren(), Color.BLACK);
+                                setTextRowStyle(getChildren(), MyCustomColors.getYesterdayTextRowColor());
                                 setStyle("");
                             } else {
-                                setTextRowStyle(getChildren(), Color.BLACK);
+                                setTextRowStyle(getChildren(), MyCustomColors.getTodayTextRowColor());
                                 setStyle("-fx-font-weight: bold;");
                             }
                         } else {
@@ -1088,13 +1162,6 @@ public class WindowView implements View {
             String PC1Address = "\\\\172.18.0.184\\d$\\";
             String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
             File currDateFolder = new File(PC1Address + currDateFolderPath);
-            if (!currDateFolder.exists()) {
-                try {
-                    Files.createDirectories(currDateFolder.toPath());
-                } catch (IOException ex) {
-                    Helper.log(ex);
-                }
-            }
             File folderTo = new File(currDateFolder.getAbsolutePath());
             fireCopyFiles(folderTo, "PC1", false);
         });
@@ -1103,14 +1170,6 @@ public class WindowView implements View {
             String PC2Address = "\\\\172.18.0.183\\d$\\";
             String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
             File currDateFolder = new File(PC2Address + currDateFolderPath);
-            if (!currDateFolder.exists()) {
-                try {
-                    Files.createDirectories(currDateFolder.toPath());
-                } catch (IOException ex) {
-                    Helper.log(ex);
-                }
-            }
-
             File folderTo = new File(currDateFolder.getAbsolutePath());
             fireCopyFiles(folderTo, "PC2", false);
         });
@@ -1393,8 +1452,6 @@ public class WindowView implements View {
                 }
             }
         });
-
-        tableViewUploading.getStylesheets().add("css/tableViewUploading.css");
     }
 
     private void initReportMenu() {
