@@ -81,7 +81,8 @@ public class WindowView implements View {
     private final int EXIT_MENUITEM = 7;
 
     private final int REPORT_MENUITEM = 0;
-    private final int FFASTRANS_MENUITEM = 1;
+    private final int REPORT_EMAIL_MENUITEM = 1;
+    private final int FFASTRANS_MENUITEM = 2;
 
     private FXMLController fxmlController;
     private MyModel myModel;
@@ -469,44 +470,13 @@ public class WindowView implements View {
                                 Helper.print("Start connection");
                                 fxmlController.establishConnection(ftpSource);
                             });
-
-/*
-                            if (ftpSource.isCopyExists()) {
-                                Helper.print("Copy Exist!");
-                                if (fxmlController.isOffline()) {
-                                    Helper.print("Start connection!");
-                                    fxmlController.establishConnection(ftpSource);
-                                    FTPButton.setDisable(true);
-                                } else {
-                                    Helper.print("End connection!");
-                                    fxmlController.closeConnection();
-                                    FTPButton.setDisable(false);
-                                }
-                            } else {
-                                Helper.print("Copy Not Exist!");
-                            }
-*/
                             break;
                         } else {
                             Helper.print("LOGIN FAIL");
                         }
                     }
                 }
-/*
-                    Platform.runLater(new Runnable() {
-                                Alert alert = new Alert(Alert.AlertType.ERROR);
-                                alert.setContentText("File not found or some IO error occurred!!!");
-                                alert.showAndWait();
-                  }
-*/
-//                fxmlController.offlineProperty().addListener(new ChangeListener<Boolean>() {
-//                    @Override
-//                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-//                        if (newValue) {
-//                            ftpSource.stop();
-//                        }
-//                    }
-//                });
+
                 if (!result) {
                     startButtonText.setVisible(true);
                     startButton.setDisable(false);
@@ -1457,44 +1427,24 @@ public class WindowView implements View {
     private void initReportMenu() {
         MenuBar menuBar = (MenuBar) root.lookup("#menuBar");               // Menu Bar
         Menu toolsMenu = menuBar.getMenus().get(TOOLS_MENU);                       // Tools Menu
-        MenuItem reportMenuItem = toolsMenu.getItems().get(REPORT_MENUITEM);       // Report Menu
+        MenuItem reportDesktopMenuItem = toolsMenu.getItems().get(REPORT_MENUITEM);       // Report Menu on Desktop
+        MenuItem reportEMailMenuItem = toolsMenu.getItems().get(REPORT_EMAIL_MENUITEM);       // Report Menu on EMail
         MenuItem ffastransMenuItem = toolsMenu.getItems().get(FFASTRANS_MENUITEM); // FFAStrans Menu
-        reportMenuItem.setOnAction(new EventHandler<ActionEvent>() {
+
+        reportDesktopMenuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                ReportUtils.initFile();
-                System.out.println(ReportUtils.getDateInfo());
-                ReportUtils.writeInfoToFile(ReportUtils.getDateInfo());
-                String lastname1 = "Мережин";
-                ReportUtils.writeInfoToFile(lastname1);
-                String lastname2 = "Халиков";
-                ReportUtils.writeInfoToFile(lastname2);
-                System.out.println(ReportUtils.getCountOfFiles("\\\\FTPRES\\upload\\"));
-                ReportUtils.writeInfoToFile("Общее количество файлов - " +
-                        Integer.toString(ReportUtils.getCountOfFiles("\\\\FTPRES\\upload\\")));
-                ReportUtils.writeInfoToFile("Carbon - " +
-                        Integer.toString(ReportUtils.getCountOfFiles("\\\\rikrz\\dalet-out")));
-                ReportUtils.writeInfoToFile("FFAStrans - " +
-                        Integer.toString(ReportUtils.getCountOfFiles("\\\\rikrz\\e$\\coder_folder\\ff-dalet-in")));
-                ReportUtils.writeInfoToFile("Quantel - " +
-                        Integer.toString(ReportUtils.getCountOfFiles("\\\\ftpres\\quantel$")));
-
-                String PC1FolderYesterday = "\\\\172.18.0.184\\d$\\" +
-                        new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getYesterday800());
-                String PC1FolderToday = "\\\\172.18.0.184\\d$\\" +
-                        new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getToday800());
-                String PC2FolderYesterday = "\\\\172.18.0.183\\d$\\" +
-                        new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getYesterday800());
-                String PC2FolderToday = "\\\\172.18.0.183\\d$\\" +
-                        new SimpleDateFormat("dd-MM-yy").format(ReportUtils.getToday800());
-
-                ReportUtils.writeInfoToFile("Quantel SDI - " +
-                        Integer.toString(ReportUtils.getCountOfFiles(PC1FolderYesterday) +
-                                ReportUtils.getCountOfFiles(PC1FolderToday) +
-                                ReportUtils.getCountOfFiles(PC2FolderYesterday) +
-                                ReportUtils.getCountOfFiles(PC2FolderToday)));
+                ReportUtils.createReport();
             }
         });
+
+        reportEMailMenuItem.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                ReportUtils.reportToEMail();
+            }
+        });
+
         ffastransMenuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {

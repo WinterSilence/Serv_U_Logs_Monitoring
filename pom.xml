@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>myProject</groupId>
     <artifactId>WorkProject</artifactId>
-    <version>20171011</version>
+    <version>20171019</version>
     <dependencies>
         <dependency>
             <groupId>commons-net</groupId>
@@ -22,6 +22,18 @@
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
             <version>1.10</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.10.3</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/javax.mail/mail -->
+        <dependency>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+            <version>1.5.0-b01</version>
         </dependency>
     </dependencies>
     <build>
@@ -90,6 +102,7 @@
                                 <resource>
                                     <directory>src/main/resources</directory>
                                     <include>default.properties</include>
+                                    <include>template.xhtml</include>
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>
@@ -103,7 +116,6 @@
                 <directory>src/main/resources</directory>
                 <excludes>
                     <exclude>**/*.jar</exclude>
-                    <exclude>default.properties</exclude>
                 </excludes>
             </resource>
         </resources>

@@ -59,8 +59,9 @@
         </Menu>
             <Menu mnemonicParsing="false" text="Tools">
                <items>
-                  <MenuItem fx:id="ffastransMenuItem" mnemonicParsing="false" text="Составить отчёт" />
-                  <MenuItem fx:id="reportMenuItem1" mnemonicParsing="false" text="FFAStrans монитор" />
+                  <MenuItem fx:id="reportMenuItem" mnemonicParsing="false" text="Составить отчёт на рабочий стол" />
+                  <MenuItem fx:id="reportEMailMenuItem" mnemonicParsing="false" text="Составить отчёт на почту" />
+                  <MenuItem fx:id="ffastransMenuItem" mnemonicParsing="false" text="FFAStrans монитор" />
                </items>
             </Menu>
         <Menu mnemonicParsing="false" text="Help">
