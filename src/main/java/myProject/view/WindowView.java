@@ -1200,13 +1200,11 @@ public class WindowView implements View {
             File initialDirectory = new File("\\\\ftpres\\upload\\upload_wan\\");
             if (initialDirectory.canRead() && initialDirectory.canExecute() &&
                     initialDirectory.exists() && initialDirectory.isDirectory()) {
-                Helper.writeLog("Copy ToFolder start! (" + new SimpleDateFormat("dd.MM HH:mm:ss").format(new Date()) + ")");
                 directoryChooser.setInitialDirectory(initialDirectory);
                 File folderTo = directoryChooser.showDialog(stage);
                 if (folderTo != null) {
                     fireCopyFiles(folderTo, folderTo.getName(), false);
                 }
-                Helper.writeLog("Copy ToFolder end! - \"" + folderTo + "\" (" + new SimpleDateFormat("dd.MM HH:mm:ss").format(new Date()) + ")");
             } else {
                 try {
                     throw new FileNotFoundException();
