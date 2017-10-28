@@ -228,7 +228,6 @@ public class WindowView implements View {
         try {
             defaultProperties.load();
             properties.load();
-            System.out.println("initProp complete");
         } catch (ConfigurationException ex) {
             Helper.log(ex);
         }
@@ -930,7 +929,6 @@ public class WindowView implements View {
             @Override
             public void handle(MouseEvent event) {
                 if (event.isPrimaryButtonDown()) {
-                    System.out.println("click");
                     for (Task task : selectedTasksSorted) {
 // todo clear checkbox!!!
                         task.setCheckbox(false);
@@ -945,6 +943,8 @@ public class WindowView implements View {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 if (newValue != null) {
+                    searchText = "";
+                    searchTextField.setText(searchText);
                     selectedLogin = newValue;
                     clearCheckboxColumn();
                     update();

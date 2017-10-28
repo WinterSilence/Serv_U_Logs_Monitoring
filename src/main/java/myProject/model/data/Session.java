@@ -133,13 +133,9 @@ public class Session {
     }
 
     private void startFileTransfer(String data) {
-        Task task = new Task(login, IDSession);
-        task.startUpload(data);
-        addTask(task);
-    }
-
-    private void addTask(Task taskToAdd) {
-        tasks.add(taskToAdd);
+        Task newTask = new Task(login, IDSession);
+        newTask.startUpload(data);
+        tasks.add(newTask);
     }
 
     private void endUpload(String data) {
@@ -158,12 +154,7 @@ public class Session {
             Task task = new Task(login, IDSession);
             task.startUpload(data);
             task.endUpload(data);
-            addTask(task);
-/*
-            Helper.print(task);
-            Helper.print("Check found: " + login + " - " + IDSession + " - " + "task: " + task.getFilename() +
-                    " - tasks.size: " + tasks.size());
-*/
+            tasks.add(task);
         }
     }
 
@@ -179,16 +170,23 @@ public class Session {
     }
 
     private void insufficientSpaceErrorUpload(String data) {
+        Task taskToDelete = null;
+
         for (Task task : tasks) {
             int startIndex = data.indexOf(" Sorry, insufficient disk space available - receive file ") + 57;
             int endIndex = data.lastIndexOf(" aborted.");
             File file = new File(data.substring(startIndex, endIndex));
-            if (task.getFilename().equals(file.getName()) && task.getState() != UploadState.ERROR_UPLOAD) {
-                task.setState(UploadState.ERROR_UPLOAD);
+            if (task.getFilename().equals(file.getName())
+                    && task.getUnitFile().getFile().getParentFile().getName().equals(file.getParentFile().getName())) {
+                if (task.getState() != UploadState.ERROR_UPLOAD) {
+                    task.setState(UploadState.ERROR_UPLOAD);
+                } else {
+                    taskToDelete = task;
+                }
             }
         }
+        tasks.remove(taskToDelete);
     }
-
 
     public void setData(String data) {
         this.data = data;
