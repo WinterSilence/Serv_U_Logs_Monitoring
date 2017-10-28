@@ -277,7 +277,7 @@ public class ReportUtils {
                 getCountOfFiles(PC2FolderToday);
     }
 
-    public static void reportToEMail() {
+    public static Message prepareEMailToSend() {
         String smtpServer = "exr.res.vgtrk";
         String to = "smena-ogs@vgtrk.com,apetrushenkov@vgtrk.com,aseyidov@vgtrk.com";
         String from = "smena-ogs@vgtrk.com";
@@ -360,9 +360,19 @@ public class ReportUtils {
 
             message.setSentDate(new Date());
 
-            Transport.send(message);
         } catch (IOException | MessagingException ex) {
             Helper.log(ex);
         }
+        return message;
+    }
+
+    public static void sendEMail(Message message, String subject, String textField, String HTMLContent) throws MessagingException {
+        message.setSubject(subject);
+        message.setRecipients(Message.RecipientType.TO,
+                InternetAddress.parse(textField, false));
+        Document doc = Jsoup.parse(HTMLContent);
+        message.setContent(doc.html()
+                , "text/html; charset=windows-1251");
+        Transport.send(message);
     }
 }

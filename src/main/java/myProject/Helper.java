@@ -123,7 +123,7 @@ public class Helper {
     public static void transferFile(File from, File to) throws IOException {
         if (from.exists()) {
             if (!to.exists()) {
-                Files.copy(from.toPath(), to.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(from.toPath(), to.toPath());
             }
             to.setLastModified(new Date().getTime());
         }

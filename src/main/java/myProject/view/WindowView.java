@@ -20,6 +20,7 @@ import javafx.event.EventHandler;
 import javafx.event.EventTarget;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -40,6 +41,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
+import javafx.scene.web.WebView;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -60,6 +62,9 @@ import myProject.view.viewUtils.ReportUtils;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
+import javax.mail.Address;
+import javax.mail.Message;
+import javax.mail.MessagingException;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
@@ -550,7 +555,6 @@ public class WindowView implements View {
             ftpSource.setUsername(usernamePassword.getKey());
             ftpSource.setPassword(usernamePassword.getValue());
         });
-//        if (!result.isPresent()) throw new SocketException();
         return result.isPresent();
     }
 
@@ -562,7 +566,6 @@ public class WindowView implements View {
                 if (newValue) {
                     startCircle.setFill(Color.LIGHTGREEN);
                     stopButton.setDisable(false);
-//                    stopButton.setDisable(false);
                 } else {
                     startCircle.setFill(Color.RED);
                     stopButton.setDisable(true);
@@ -1315,7 +1318,7 @@ public class WindowView implements View {
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
-                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
                             alert.setHeaderText("");
                             alert.setGraphic(null);
                             alert.setContentText(ex.getReason());
@@ -1329,6 +1332,7 @@ public class WindowView implements View {
                             }));
                             idleStage.setCycleCount(1);
                             idleStage.play();
+                            ((Stage) alert.getDialogPane().getScene().getWindow()).setIconified(true);
                             alert.showAndWait();
                         }
                     });
@@ -1358,6 +1362,7 @@ public class WindowView implements View {
                     }));
                     idleStage.setCycleCount(1);
                     idleStage.play();
+                    ((Stage) alert.getDialogPane().getScene().getWindow()).setIconified(true);
                     alert.showAndWait();
                 }
             }
@@ -1441,7 +1446,50 @@ public class WindowView implements View {
         reportEMailMenuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                ReportUtils.reportToEMail();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Message message = ReportUtils.prepareEMailToSend();
+                        Platform.runLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                                    alert.setGraphic(null);
+                                    alert.setHeaderText("");
+                                    alert.initModality(Modality.WINDOW_MODAL);
+                                    List<Address> recipients = Arrays.asList(message.getAllRecipients());
+                                    TextField textFieldSubject = new TextField(message.getSubject());
+                                    TextField textFieldRec = new TextField(recipients.toString()
+                                            .substring(1)
+                                            .substring(0, recipients.toString().length() - 2));
+                                    SplitPane splitPane = new SplitPane();
+                                    splitPane.setOrientation(Orientation.VERTICAL);
+                                    splitPane.getItems().addAll(textFieldSubject, textFieldRec);
+
+                                    WebView webView = new WebView();
+                                    webView.getEngine().loadContent(message.getContent().toString());
+
+                                    splitPane.getItems().add(webView);
+                                    alert.getDialogPane().setContent(splitPane);
+                                    /**
+                                     *   Optional feature: set Alert stage minimized.
+                                     */
+//                                    ((Stage)alert.getDialogPane().getScene().getWindow()).setIconified(true);
+                                    Optional<ButtonType> result = alert.showAndWait();
+
+                                    if (result.isPresent() && result.get().equals(ButtonType.OK)) {
+                                        String subject = textFieldSubject.getText();
+                                        String HTMLContent = webView.getEngine().executeScript("document.documentElement.outerHTML").toString();
+                                        ReportUtils.sendEMail(message, subject, textFieldRec.getText(), HTMLContent);
+                                    }
+                                } catch (IOException | MessagingException ex) {
+                                    Helper.log(ex);
+                                }
+                            }
+                        });
+                    }
+                }).start();
             }
         });
 
@@ -1658,7 +1706,8 @@ public class WindowView implements View {
                 Platform.runLater(new Runnable() {
                     @Override
                     public void run() {
-                        leftStatusLabel.setText(s.toString());
+                        if (s != null)
+                            leftStatusLabel.setText(s.toString());
                     }
                 });
                 super.println(s);
