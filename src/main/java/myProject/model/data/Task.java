@@ -13,7 +13,7 @@ import java.util.Locale;
 
 public class Task {
 
-    // Alternate date implementation
+//   Alternate date implementation
 //    private UnitFile unitFile;
 
     private UploadState state = UploadState.NOT_START;
@@ -137,29 +137,5 @@ public class Task {
 
     public String getIDSession() {
         return IDSession;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        Task task = (Task) obj;
-
-        if (!IDSession.equals(task.IDSession)) return false;
-        if (!unitFile.equals(task.unitFile)) return false;
-
-        if (!login.equals(task.login)) return false;
-
-        if (timeStart != null) {
-            if (task.timeStart != null) {
-                if (!timeStart.equals(task.timeStart)) {
-                    return false;
-                }
-            }
-        } else {
-            if (task.timeStart != null) return false;
-        }
-        return true;
     }
 }
