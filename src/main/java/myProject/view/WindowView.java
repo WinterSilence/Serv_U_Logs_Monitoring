@@ -727,7 +727,6 @@ public class WindowView implements View {
         }
         if (selectedLogin.equals("Utro-obmen")) {
             for (Task task : list) {
-// todo need test!!!
                 if (task.getFolder().equals(defaultProperties.getString("localPathToDU") + "\\Vesti_utro")) {
                     result.add(task);
                 }
@@ -759,22 +758,36 @@ public class WindowView implements View {
     }
 
     private List<Task> filterTaskListSameTasks(List<Task> list) {
+
         List<Task> sortList = new ArrayList<>();
         sortList.addAll(list);
         List<Task> result = new ArrayList<>();
 
         for (Task currentTask : list) {
             Iterator<Task> iterator = sortList.iterator();
+            Task taskToAdd = null;
             while (iterator.hasNext()) {
                 Task task = iterator.next();
-                if (currentTask.equals(task)) {
-                    result.add(currentTask);
-                } else if (currentTask.getFilename().equals(task.getFilename())
+                if (currentTask.getFullname().equals(task.getFullname())
                         && currentTask.getLogin().equals(task.getLogin())
-                        && currentTask.getFolder().equals(task.getFolder())) {
+                        ) {
+                    Date date1 = currentTask.getTimeStart();
+                    Date date2 = task.getTimeStart();
+                    if (date1 != date2) {
+                        Calendar cal1 = new GregorianCalendar();
+                        cal1.setTime(date1);
+                        Calendar cal2 = new GregorianCalendar();
+                        cal2.setTime(date2);
+                        if (!(cal1.get(Calendar.DATE) == cal2.get(Calendar.DATE))) {
+                            continue;
+                        }
+                    }
                     iterator.remove();
+                    taskToAdd = task;
                 }
             }
+            if (taskToAdd != null)
+                result.add(taskToAdd);
         }
         return result;
     }
@@ -907,6 +920,7 @@ public class WindowView implements View {
         TableColumn<Task, Boolean> recentlyCheckBoxColumn = new TableColumn<>();
         recentlyCheckBoxColumn.setGraphic(recentlyCheckBoxColumnLabel);
         tableViewRecently.getColumns().set(0, recentlyCheckBoxColumn);
+
         recentlyCheckBoxColumn.setSortable(false);
         recentlyCheckBoxColumn.setResizable(false);
         recentlyCheckBoxColumn.setMinWidth(30);
@@ -949,8 +963,8 @@ public class WindowView implements View {
                 }
             }
         });
-        tableViewRecently.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
+        tableViewRecently.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         tableViewRecently.setRowFactory(new Callback<TableView<Task>, TableRow<Task>>() {
             @Override

@@ -28,17 +28,6 @@ public class UnitFile {
     }
 
     @Override
-    public boolean equals(Object obj) {
-
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-
-        UnitFile unitFile = (UnitFile) obj;
-
-        return file.equals(unitFile.file);// && size.equals(unitFile.size);
-    }
-
-    @Override
     public String toString() {
         return file.getAbsolutePath() + " - " + getSize();
     }
