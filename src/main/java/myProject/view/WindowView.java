@@ -610,9 +610,7 @@ public class WindowView implements View {
             if (task.getFolder().equals(defaultProperties.getString("localPathToDezhChast"))) {
                 recentFilesLoginUpdate.add("Dezhchast");
             }
-// todo test!!!
             if (task.getFolder().equals(defaultProperties.getString("localPathToDU") + "\\Vesti_utro")) {
-                System.out.println(task.getFolder());
                 recentFilesLoginUpdate.add("Utro-obmen");
             }
         }

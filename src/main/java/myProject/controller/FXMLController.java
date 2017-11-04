@@ -61,14 +61,14 @@ public class FXMLController implements Controller {
                 startConnection.set(true);
                 myModel.setFileSource(fileSource);
                 myModel.initDefault();
-                Calendar today = new GregorianCalendar();
+                Calendar currentTime = new GregorianCalendar();
 
                 while (!myModel.isOffline()) {
                     connected.set(true);
-                    Calendar checkDate = new GregorianCalendar();
-                    if (Helper.comparingDays(today, checkDate) != 0) {
+                    Calendar checkTime = new GregorianCalendar();
+                    if (Helper.comparingHours(currentTime, checkTime) != 0) {
                         myModel.initDefault();
-                        today = new GregorianCalendar();
+                        currentTime = new GregorianCalendar();
                     } else {
                         myModel.update();
                     }
@@ -95,13 +95,13 @@ public class FXMLController implements Controller {
                 myModel.setFileSource(fileSource);
                 myModel.initToday();
                 view.update();
-                Calendar today = new GregorianCalendar();
+                Calendar currentTime = new GregorianCalendar();
 //                setOfflineProperty();
                 while (!myModel.isOffline()) {
-                    Calendar checkDate = new GregorianCalendar();
-                    if (Helper.comparingDays(today, checkDate) != 0) {
+                    Calendar checkTime = new GregorianCalendar();
+                    if (Helper.comparingHours(currentTime, checkTime) != 0) {
                         myModel.initToday();
-                        today = new GregorianCalendar();
+                        currentTime = new GregorianCalendar();
                     } else {
                         myModel.update();
                     }

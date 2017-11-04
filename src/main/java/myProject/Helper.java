@@ -174,6 +174,16 @@ public class Helper {
         return calendar1.get(Calendar.DAY_OF_MONTH) - calendar2.get(Calendar.DAY_OF_MONTH);
     }
 
+    public static int comparingHours(Calendar calendar1, Calendar calendar2) {
+        if (calendar1.get(Calendar.YEAR) != calendar2.get(Calendar.YEAR))
+            return calendar1.get(Calendar.YEAR) - calendar2.get(Calendar.YEAR);
+        if (calendar1.get(Calendar.MONTH) != calendar2.get(Calendar.MONTH))
+            return calendar1.get(Calendar.MONTH) - calendar2.get(Calendar.MONTH);
+        if (calendar1.get(Calendar.DAY_OF_MONTH) != calendar2.get(Calendar.DAY_OF_MONTH))
+            return calendar1.get(Calendar.DAY_OF_MONTH) - calendar2.get(Calendar.DAY_OF_MONTH);
+        return calendar1.get(Calendar.HOUR_OF_DAY) -calendar2.get(Calendar.HOUR_OF_DAY);
+    }
+
     public static void createCurrentDateFolder(File folder) {
         if (!folder.exists()) {
             try {
@@ -183,6 +193,7 @@ public class Helper {
             }
         }
     }
+
     public static PropertiesConfiguration getProperties() {
         String userTempDir = System.getProperty("java.io.tmpdir");
         File propertiesFile = new File(userTempDir + File.separator + "workProjectProp" + File.separator + "wp.properties");
