@@ -274,7 +274,7 @@ public class WindowView implements View {
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                 if (newValue) {
                 } else {
-                    //todo
+//              todo
 //                    setStartCircle(Color.RED);
                     startButtonText.setVisible(true);
                     startButton.setDisable(false);
@@ -1117,6 +1117,11 @@ public class WindowView implements View {
                 File folderTo = directoryChooser.showDialog(stage);
                 if (folderTo != null) {
                     unZIP(folderTo.getAbsolutePath(), task);
+                    try {
+                        fireOpenFolder(folderTo.getAbsolutePath());
+                    } catch (IOException ex) {
+                        Helper.log(ex);
+                    }
                 }
             });
         }
@@ -1235,16 +1240,26 @@ public class WindowView implements View {
             try {
                 Task focusTask = tableViewRecently.getItems()
                         .get(tableViewRecently.getSelectionModel().getFocusedIndex());
-                if (System.getProperty("os.name").startsWith("Windows")) {
-                    Runtime.getRuntime().exec("explorer.exe /select,"
-                            + Helper.renameFolder(focusTask.getUnitFile().getFile().getAbsolutePath()));
-                }
+                fireOpenFileFolderWithFocus(focusTask.getUnitFile().getFile().getAbsolutePath());
             } catch (IOException ex) {
                 Helper.log(ex);
             }
         });
-
         row.setContextMenu(contextMenu);
+    }
+
+    private void fireOpenFileFolderWithFocus(String absolutePath) throws IOException {
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            Runtime.getRuntime().exec("explorer.exe /select,"
+                    + Helper.renameFolder(absolutePath));
+        }
+    }
+
+    private void fireOpenFolder(String absolutePath) throws IOException{
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            Runtime.getRuntime().exec("explorer.exe "
+                    + Helper.renameFolder(absolutePath));
+        }
     }
 
     private void unZIP(String folderTo, Task task) {
