@@ -396,7 +396,12 @@ public class WindowView implements View {
         startButton.setOnAction(event -> {
             createCurrentDateFolder(defaultProperties.getString("pc1Folder"));
             createCurrentDateFolder(defaultProperties.getString("pc2Folder"));
-            fxmlController.establishConnection(FileSourceFactory.createShareSource());
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    fxmlController.establishConnection(FileSourceFactory.createShareSource());
+                }
+            });
             startButtonText.setVisible(false);
             startButton.setDisable(true);
             FTPButton.setDisable(true);
