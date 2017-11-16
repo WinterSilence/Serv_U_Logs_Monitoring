@@ -11,7 +11,7 @@ import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class FtpSource implements FileSource {
+public class FtpSourceImpl implements FileSource {
 
     private String ftpAddress = "";
     private String username = "";
@@ -27,7 +27,7 @@ public class FtpSource implements FileSource {
     private FTPClient ftpClient;
     private boolean offline = true;
 
-    public FtpSource() {
+    public FtpSourceImpl() {
         try {
             File folderToFile = new File(folderTo);
             if (!folderToFile.exists() || !folderToFile.isDirectory()) {

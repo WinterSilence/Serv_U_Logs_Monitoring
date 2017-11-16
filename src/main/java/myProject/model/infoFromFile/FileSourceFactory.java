@@ -4,12 +4,11 @@ public class FileSourceFactory {
     private FileSourceFactory(){
     }
 
-
-    public static FtpSource createFtpSource(){
-        return new FtpSource();
+    public static FtpSourceImpl createFtpSource(){
+        return new FtpSourceImpl();
     }
 
-    public static ShareSource createShareSource(){
-        return new ShareSource();
+    public static ShareSourceImpl createShareSource(){
+        return new ShareSourceImpl();
     }
 }

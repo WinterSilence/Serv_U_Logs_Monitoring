@@ -57,7 +57,7 @@ import myProject.model.data.Session;
 import myProject.model.data.Task;
 import myProject.model.data.UploadState;
 import myProject.model.infoFromFile.FileSourceFactory;
-import myProject.model.infoFromFile.FtpSource;
+import myProject.model.infoFromFile.FtpSourceImpl;
 import myProject.view.viewUtils.MyCustomColors;
 import myProject.view.viewUtils.ReportUtils;
 import org.apache.commons.configuration.ConfigurationException;
@@ -134,7 +134,7 @@ public class WindowView implements View {
 
     // Отображение Онлайн сессий и пришедших файлов за checkHours часов
     // default value = 48
-    private int checkHours = 48;
+    private int checkHours;
     private boolean isDay;
 
     private Stage stage;
@@ -150,7 +150,6 @@ public class WindowView implements View {
     }
 
     public void startView(Stage stage) throws IOException {
-        initProperties();
         this.stage = stage;
         root = FXMLLoader.load(getClass().getClassLoader().getResource("WorkProjectApplication.fxml"));
         Scene scene = new Scene(root, 1280, 720);
@@ -205,6 +204,8 @@ public class WindowView implements View {
         currentDate = new SimpleStringProperty(simpleDateFormat.format(new Date()));
         yesterdayDate = new SimpleStringProperty(simpleDateFormat.format(Helper.yesterday()));
 
+        checkHours = defaultProperties.getInt("checkHours");
+
         currentDate.addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
@@ -227,16 +228,6 @@ public class WindowView implements View {
         initUploadingFiles();
         initRecentlyUploadedFiles();
         initReportMenu();
-    }
-
-    private void initProperties() {
-        try {
-            defaultProperties.load();
-            properties.load();
-        } catch (ConfigurationException ex) {
-            Helper.log(ex);
-        }
-
     }
 
     private void setDayNightButton() {
@@ -336,6 +327,8 @@ public class WindowView implements View {
 
     private void setCheckHoursButton() {
         Button checkHoursButton = (Button) anchorPaneRecently.lookup("#checkHoursButton");
+        Label numberOfHours = (Label) anchorPaneRecently.lookup("#numberOfHours");
+        numberOfHours.setText(String.valueOf(checkHours));
 
         checkHoursButton.setOnAction(event -> {
             while (true) {
@@ -351,8 +344,8 @@ public class WindowView implements View {
                             throw new WrongInputException();
                         }
                         checkHours = hours;
-                        Label numberOfHours = (Label) anchorPaneRecently.lookup("#numberOfHours");
                         numberOfHours.setText(String.valueOf(checkHours));
+
                         update();
                         break;
                     } catch (NumberFormatException ex) {
@@ -493,17 +486,17 @@ public class WindowView implements View {
                     ftpAddress = ftpAddress.replaceFirst("^(ftp)\\W+", "");
                 }
                 ftpAddress = ftpAddress.replaceAll("(\\\\|/)*$", "");
-                FtpSource ftpSource = FileSourceFactory.createFtpSource();
-                ftpSource.setFtpAddress(ftpAddress);
+                FtpSourceImpl ftpSourceImpl = FileSourceFactory.createFtpSource();
+                ftpSourceImpl.setFtpAddress(ftpAddress);
                 boolean result;
-                while ((result = passwordDialog(ftpSource))) {
-                    if (ftpSource.connectToFtp()) {
-                        if (ftpSource.loginOk()) {
-                            ftpSource.start();
-                            ftpSource.copyExistsProperty().addListener((observable, oldValue, newValue) -> {
+                while ((result = passwordDialog(ftpSourceImpl))) {
+                    if (ftpSourceImpl.connectToFtp()) {
+                        if (ftpSourceImpl.loginOk()) {
+                            ftpSourceImpl.start();
+                            ftpSourceImpl.copyExistsProperty().addListener((observable, oldValue, newValue) -> {
                                 Helper.print("CopyExist");
                                 Helper.print("Start connection");
-                                fxmlController.establishConnection(ftpSource);
+                                fxmlController.establishConnection(ftpSourceImpl);
                             });
                             break;
                         } else {
@@ -529,7 +522,7 @@ public class WindowView implements View {
         });
     }
 
-    private boolean passwordDialog(FtpSource ftpSource) {
+    private boolean passwordDialog(FtpSourceImpl ftpSourceImpl) {
         // Create the custom dialog.
         Dialog<Pair<String, String>> dialog = new Dialog<>();
         dialog.setTitle("Login Dialog");
@@ -582,8 +575,8 @@ public class WindowView implements View {
         Optional<Pair<String, String>> result = dialog.showAndWait();
 
         result.ifPresent(usernamePassword -> {
-            ftpSource.setUsername(usernamePassword.getKey());
-            ftpSource.setPassword(usernamePassword.getValue());
+            ftpSourceImpl.setUsername(usernamePassword.getKey());
+            ftpSourceImpl.setPassword(usernamePassword.getValue());
         });
         return result.isPresent();
     }
@@ -1139,7 +1132,7 @@ public class WindowView implements View {
             contextMenu.getItems().add(unZIP);
             unZIP.setOnAction(event -> {
                 DirectoryChooser directoryChooser = new DirectoryChooser();
-                directoryChooser.setInitialDirectory(new File("\\\\ftpres\\upload\\upload_wan\\"));
+                directoryChooser.setInitialDirectory(new File(defaultProperties.getString("initialDirectory")));
                 File folderTo = directoryChooser.showDialog(stage);
                 if (folderTo != null) {
                     unZIP(folderTo.getAbsolutePath(), task);
@@ -1154,33 +1147,33 @@ public class WindowView implements View {
         contextMenu.getItems().addAll(copyToUploadFolder, openFolder);
 
         inQuantel.setOnAction(event1 -> {
-            File folderTo = new File("\\\\ftpres\\quantel$\\");
+            File folderTo = new File(defaultProperties.getString("quantelFolder"));
             fireCopyFiles(folderTo, "Quantel", true);
         });
 
         inDalet.setOnAction(event1 -> {
-            File folderTo = new File("\\\\rikrz\\dalet-in\\");
+            File folderTo = new File(defaultProperties.getString("rikrzFolder"));
             fireCopyFiles(folderTo, "Dalet основной", true);
         });
 
         inDaletFFAStrans.setOnAction(event1 -> {
-            File folderTo = new File("\\\\rikrz\\e$\\coder_folder\\ff-dalet-in\\");
+            File folderTo = new File(defaultProperties.getString("ffastransFolder"));
             fireCopyFiles(folderTo, "Dalet FFAStrans", true);
         });
 
         inDaletReserv.setOnAction(event1 -> {
-            File folderTo = new File("\\\\172.27.68.118\\storages\\CARBONCODER\\IN_FTP\\");
+            File folderTo = new File(defaultProperties.getString("rezervDaletFolder"));
             fireCopyFiles(folderTo, "Dalet Резерв", true);
         });
 
         inAirManager.setOnAction(event1 -> {
-            File folderTo = new File("\\\\vfs\\air-manager$\\");
+            File folderTo = new File(defaultProperties.getString("airManagerFolder"));
             fireCopyFiles(folderTo, "Air-manager", true);
         });
 
 
         quantelNaPryamkiPC1.setOnAction(event1 -> {
-            String PC1Address = "\\\\172.18.0.184\\d$\\";
+            String PC1Address = defaultProperties.getString("pc1Folder");
             String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
             File currDateFolder = new File(PC1Address + currDateFolderPath);
             File folderTo = new File(currDateFolder.getAbsolutePath());
@@ -1188,7 +1181,7 @@ public class WindowView implements View {
         });
 
         quantelNaPryamkiPC2.setOnAction(event1 -> {
-            String PC2Address = "\\\\172.18.0.183\\d$\\";
+            String PC2Address = defaultProperties.getString("pc2Folder");
             String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
             File currDateFolder = new File(PC2Address + currDateFolderPath);
             File folderTo = new File(currDateFolder.getAbsolutePath());
@@ -1196,43 +1189,43 @@ public class WindowView implements View {
         });
 
         copyToEMG.setOnAction(event1 -> {
-            File folderTo = new File("\\\\ftpres3\\emg$\\");
+            File folderTo = new File(defaultProperties.getString("emgFolder"));
             fireCopyFiles(folderTo, "EMG", false);
         });
 
         copyToCulture.setOnAction(event1 -> {
-            File folderTo = new File("\\\\ftpres\\culture$\\");
+            File folderTo = new File(defaultProperties.getString("cultureFolder"));
             fireCopyFiles(folderTo, "Культуру", true);
         });
 
         copyToDezhchast.setOnAction(event1 -> {
-            File folderTo = new File("\\\\ftpres\\upload\\upload_wan\\DezhChast\\");
+            File folderTo = new File(defaultProperties.getString("dezhChastFolder"));
             fireCopyFiles(folderTo, "ДЧ", false);
         });
 
         copyToObmenUtro.setOnAction(event1 -> {
-            File folderTo = new File("\\\\ftpres\\obmen-utro$\\for_moscow\\");
+            File folderTo = new File(defaultProperties.getString("obmenUtroFolder"));
             fireCopyFiles(folderTo, "ДУР", false);
         });
 
         soundToQuantel.setOnAction(event -> {
-            File folderTo = new File("\\\\ftpres\\quantel$\\");
+            File folderTo = new File(defaultProperties.getString("quantelFolder"));
             encodeSound(folderTo, "Quantel (звук)", true);
         });
 
         soundToDalet.setOnAction(event -> {
-            File folderTo = new File("\\\\rikrz\\dalet-in\\");
+            File folderTo = new File("rikrzFolder");
             encodeSound(folderTo, "Dalet (звук)", true);
         });
 
         soundToUtro.setOnAction(event -> {
-            File folderTo = new File("\\\\ftpres\\obmen-utro$\\for_moscow\\");
+            File folderTo = new File("obmenUtroFolder");
             encodeSound(folderTo, "Utro-Obmen (звук)", false);
         });
 
         soundToFolder.setOnAction(event -> {
             DirectoryChooser directoryChooser = new DirectoryChooser();
-            File initialDirectory = new File("\\\\ftpres\\upload\\upload_wan\\");
+            File initialDirectory = new File(defaultProperties.getString("initialDirectory"));
             if (initialDirectory.canRead() && initialDirectory.canExecute() &&
                     initialDirectory.exists() && initialDirectory.isDirectory()) {
                 directoryChooser.setInitialDirectory(initialDirectory);
@@ -1245,7 +1238,7 @@ public class WindowView implements View {
 
         copyToUploadFolder.setOnAction(event -> {
             DirectoryChooser directoryChooser = new DirectoryChooser();
-            File initialDirectory = new File("\\\\ftpres\\upload\\upload_wan\\");
+            File initialDirectory = new File(defaultProperties.getString("initialDirectory"));
             if (initialDirectory.canRead() && initialDirectory.canExecute() &&
                     initialDirectory.exists() && initialDirectory.isDirectory()) {
                 directoryChooser.setInitialDirectory(initialDirectory);
@@ -1405,7 +1398,7 @@ public class WindowView implements View {
                 if (newValue) {
                     Alert alert = new Alert(Alert.AlertType.ERROR);
                     alert.setHeaderText("");
-                    alert.setTitle(fileFrom.getName());
+                    alert.setTitle("Файл " + fileFrom.getName() + " скопирован в " + text);
                     alert.setGraphic(null);
                     alert.setContentText("Файл " + fileFrom.getName() + " скопирован в " + text);
                     alert.initModality(Modality.NONE);
@@ -1468,8 +1461,6 @@ public class WindowView implements View {
         tableViewUploading.setOnMousePressed(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent event) {
                 if (event.isSecondaryButtonDown()) {
-                    Helper.print("Right Button Clicked in tableViewUploading");
-
                     EventTarget eventTarget = event.getTarget();
                     TableCell tableCell = null;
                     if (eventTarget instanceof TableCell) {
@@ -1486,11 +1477,11 @@ public class WindowView implements View {
     }
 
     private void initReportMenu() {
-        MenuBar menuBar = (MenuBar) root.lookup("#menuBar");               // Menu Bar
-        Menu toolsMenu = menuBar.getMenus().get(TOOLS_MENU);                       // Tools Menu
-        MenuItem reportDesktopMenuItem = toolsMenu.getItems().get(REPORT_MENUITEM);       // Report Menu on Desktop
-        MenuItem reportEMailMenuItem = toolsMenu.getItems().get(REPORT_EMAIL_MENUITEM);       // Report Menu on EMail
-        MenuItem ffastransMenuItem = toolsMenu.getItems().get(FFASTRANS_MENUITEM); // FFAStrans Menu
+        MenuBar menuBar = (MenuBar) root.lookup("#menuBar");                    // Menu Bar
+        Menu toolsMenu = menuBar.getMenus().get(TOOLS_MENU);                            // Tools Menu
+        MenuItem reportDesktopMenuItem = toolsMenu.getItems().get(REPORT_MENUITEM);     // Report Menu on Desktop
+        MenuItem reportEMailMenuItem = toolsMenu.getItems().get(REPORT_EMAIL_MENUITEM); // Report Menu on EMail
+        MenuItem ffastransMenuItem = toolsMenu.getItems().get(FFASTRANS_MENUITEM);      // FFAStrans Menu
 
         reportDesktopMenuItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -1553,7 +1544,7 @@ public class WindowView implements View {
             @Override
             public void handle(ActionEvent event) {
                 try {
-                    Desktop.getDesktop().open(new File("\\\\rikrz\\e$\\FFAStrans0.8.1\\Processors\\status_monitor.exe"));
+                    Desktop.getDesktop().open(new File(defaultProperties.getString("pathToFFAStransMonitor")));
                 } catch (IOException ex) {
                     Helper.log(ex);
                 }
@@ -1583,25 +1574,25 @@ public class WindowView implements View {
 
             File fileFrom = new File(pathToFolder + File.separator + task.getFilename());
             inQuantel.setOnAction(event1 -> {
-                String quantelFolderPath = "\\\\ftpres\\quantel$\\";
+                String quantelFolderPath = defaultProperties.getString("quantelFolder");
                 File fileTo = new File(quantelFolderPath + Helper.renameFromCirrilic(task.getFilename()));
                 fireCopyFileOnComplete(fileFrom, fileTo, "в Quantel");
             });
 
             inDalet.setOnAction(event1 -> {
-                String rikrzFolderPath = "\\\\rikrz\\dalet-in\\";
+                String rikrzFolderPath = defaultProperties.getString("rikrzFolder");
                 File fileTo = new File(rikrzFolderPath + Helper.renameFromCirrilic(task.getFilename()));
                 fireCopyFileOnComplete(fileFrom, fileTo, "в Dalet основной");
             });
 
             inDaletFFAStrans.setOnAction(event1 -> {
-                String rikrzFolderPath = "\\\\rikrz\\e$\\coder_folder\\ff-dalet-in";
+                String rikrzFolderPath = defaultProperties.getString("ffastransFolder");
                 File fileTo = new File(rikrzFolderPath + Helper.renameFromCirrilic(task.getFilename()));
                 fireCopyFileOnComplete(fileFrom, fileTo, "в Dalet FFASTrans основной");
             });
 
             quantelNaPryamkiPC1.setOnAction(event1 -> {
-                String PC1Address = "\\\\172.18.0.184\\d$\\";
+                String PC1Address = defaultProperties.getString("pc1Folder");
                 String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
                 File currDateFolder = new File(PC1Address + currDateFolderPath);
 
@@ -1615,7 +1606,7 @@ public class WindowView implements View {
             });
 
             quantelNaPryamkiPC2.setOnAction(event1 -> {
-                String PC2Address = "\\\\172.18.0.183\\d$\\";
+                String PC2Address = defaultProperties.getString("pc2Folder");
                 String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
                 File currDateFolder = new File(PC2Address + currDateFolderPath);
 
@@ -1628,19 +1619,19 @@ public class WindowView implements View {
             });
 
             copyToCulture.setOnAction(event1 -> {
-                String cultureFolderPath = "\\\\ftpres\\culture$\\";
+                String cultureFolderPath = defaultProperties.getString("cultureFolder");
                 File fileTo = new File(cultureFolderPath + Helper.renameFromCirrilic(task.getFilename()));
                 fireCopyFileOnComplete(fileFrom, fileTo, "в Культуру");
             });
             copyToDezhchast.setOnAction(event1 -> {
-                String dezhchastFolderPath = "\\\\ftpres\\upload\\upload_wan\\DezhChast\\";
+                String dezhchastFolderPath = defaultProperties.getString("dezhChastFolder");
                 File fileTo = new File(dezhchastFolderPath + task.getFilename());
                 fireCopyFileOnComplete(fileFrom, fileTo, "в ДЧ");
             });
 
             copyToUploadFolder.setOnAction(event -> {
                 DirectoryChooser directoryChooser = new DirectoryChooser();
-                directoryChooser.setInitialDirectory(new File("\\\\ftpres\\upload\\upload_wan\\"));
+                directoryChooser.setInitialDirectory(new File(defaultProperties.getString("initialDirectory")));
                 File folderTo = directoryChooser.showDialog(stage);
 
                 if (folderTo != null) {

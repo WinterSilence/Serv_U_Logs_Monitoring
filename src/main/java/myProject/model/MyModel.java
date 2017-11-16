@@ -7,7 +7,10 @@ import myProject.model.data.UploadState;
 import myProject.model.infoFromFile.FileSource;
 import myProject.model.infoFromFile.OpenedFile;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -29,21 +32,33 @@ public class MyModel {
 
     //  Ненужные учётки
     private List<String> bannedLogins = new ArrayList<>();
+    private List<String> bannedFolders = new ArrayList<>();
     private FileSource fileSource;
 
     {
-        bannedLogins.add("mediagrid-reklama");
-        bannedLogins.add("mediagrid-mchs");
-        bannedLogins.add("promo");
-        bannedLogins.add("vashetv_w");
-        bannedLogins.add("vashetv_r");
-        bannedLogins.add("oformlenie");
-        bannedLogins.add("loader");
-        bannedLogins.add("rtrpl-europe");
-        bannedLogins.add("quantelr");
-        bannedLogins.add("kino");
-        bannedLogins.add("kinopokaz-m24");
-        bannedLogins.add("m24-newsroom");
+        File bannedLoginsFile = new File("banned/bannedLogins.txt");
+        if (!bannedLoginsFile.exists()) {
+            bannedLoginsFile = new File("src/main/resources/banned/bannedLogins.txt");
+        }
+        try (BufferedReader buf = new BufferedReader(new FileReader(bannedLoginsFile))) {
+            while (buf.ready()){
+                bannedLogins.add(buf.readLine());
+            }
+        } catch (IOException ex) {
+            Helper.log(ex);
+        }
+
+        File bannedFoldersFile = new File("banned/bannedFolders.txt");
+        if (!bannedFoldersFile.exists()) {
+            bannedFoldersFile = new File("src/main/resources/banned/bannedFolders.txt");
+        }
+        try (BufferedReader buf = new BufferedReader(new FileReader(bannedFoldersFile))) {
+            while (buf.ready()){
+                bannedFolders.add(buf.readLine());
+            }
+        } catch (IOException ex) {
+            Helper.log(ex);
+        }
     }
 
     public void setTodayFullPath(String fullPath) {
@@ -117,7 +132,6 @@ public class MyModel {
                 w.unlock();
             }
         }
-        removeBannedSessions();
         tasksUpdate();
     }
 
@@ -147,7 +161,6 @@ public class MyModel {
                 w.unlock();
             }
         }
-        removeBannedSessions();
         tasksUpdate();
     }
 
@@ -182,18 +195,17 @@ public class MyModel {
                 w.unlock();
             }
         }
-        removeBannedSessions();
         tasksUpdate();
     }
 
 
     public void update() {
         dataUpdate();
-        removeBannedSessions();
+        removeBannedSessionsAndFolders();
         tasksUpdate();
     }
 
-    private void removeBannedSessions() {
+    private void removeBannedSessionsAndFolders() {
         w.lock();
         try {
             Iterator<Map.Entry<String, Session>> iterator = allSessionsMap.entrySet().iterator();
@@ -202,6 +214,12 @@ public class MyModel {
                 Session value = pair.getValue();                              // Session
                 if (bannedLogins.contains(value.getLogin().toLowerCase())) {
                     iterator.remove();
+                }
+                for (Task task : value.getTasks()) {
+                    if (bannedFolders.stream().anyMatch(s -> task.getFolder().toLowerCase().contains(s.toLowerCase()))) {
+                        iterator.remove();
+                        break;
+                    }
                 }
             }
         } finally {

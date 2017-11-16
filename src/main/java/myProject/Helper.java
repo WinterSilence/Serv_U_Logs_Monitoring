@@ -5,7 +5,6 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 
 import java.io.*;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -16,6 +15,34 @@ public class Helper {
     private static File folder = new File("log");
     private static PropertiesConfiguration properties = new PropertiesConfiguration();
     private static PropertiesConfiguration defaultProperties = new PropertiesConfiguration();
+
+    static {
+        File defaultPropertyFile = new File("default.properties");
+        if (!defaultPropertyFile.exists()) {
+            defaultPropertyFile = new File("src/main/resources/default.properties");
+        }
+        defaultProperties.setFile(defaultPropertyFile);
+        String userTempDir = System.getProperty("java.io.tmpdir");
+        File propertiesFile = new File(userTempDir + File.separator + "workProjectProp" + File.separator + "wp.properties");
+        if (!propertiesFile.exists()) {
+            try {
+                if (!propertiesFile.getParentFile().exists()) {
+                    Files.createDirectories(propertiesFile.getParentFile().toPath());
+                }
+                transferFile(defaultPropertyFile, propertiesFile);
+            } catch (IOException ex) {
+                log(ex);
+            }
+        }
+        properties.setFile(propertiesFile);
+        try {
+            defaultProperties.load();
+            properties.load();
+        } catch (ConfigurationException ex) {
+            log(ex);
+        }
+
+    }
 
     static {
         if (!folder.exists() || !folder.isDirectory()) {
@@ -181,7 +208,7 @@ public class Helper {
             return calendar1.get(Calendar.MONTH) - calendar2.get(Calendar.MONTH);
         if (calendar1.get(Calendar.DAY_OF_MONTH) != calendar2.get(Calendar.DAY_OF_MONTH))
             return calendar1.get(Calendar.DAY_OF_MONTH) - calendar2.get(Calendar.DAY_OF_MONTH);
-        return calendar1.get(Calendar.HOUR_OF_DAY) -calendar2.get(Calendar.HOUR_OF_DAY);
+        return calendar1.get(Calendar.HOUR_OF_DAY) - calendar2.get(Calendar.HOUR_OF_DAY);
     }
 
     public static void createCurrentDateFolder(File folder) {
@@ -195,35 +222,10 @@ public class Helper {
     }
 
     public static PropertiesConfiguration getProperties() {
-        String userTempDir = System.getProperty("java.io.tmpdir");
-        File propertiesFile = new File(userTempDir + File.separator + "workProjectProp" + File.separator + "wp.properties");
-        if (!propertiesFile.exists()) {
-            try {
-                File propertyFile = new File("default.properties");
-                File propertyFileDefault = new File("src/main/resources/default.properties");
-                if (!propertyFile.exists()) {
-                    propertyFile = propertyFileDefault;
-                }
-                if (!propertiesFile.getParentFile().exists()) {
-                    Files.createDirectories(propertiesFile.getParentFile().toPath());
-                }
-
-                transferFile(propertyFile, propertiesFile);
-            } catch (IOException ex) {
-                log(ex);
-            }
-        }
-        properties.setFile(propertiesFile);
         return properties;
     }
 
     public static PropertiesConfiguration getDefaultProperties() {
-        File defaultPropertyFile = new File("default.properties");
-        File propertyFileDefault = new File("src/main/resources/default.properties");
-        if (!defaultPropertyFile.exists()) {
-            defaultPropertyFile = propertyFileDefault;
-        }
-        defaultProperties.setFile(defaultPropertyFile);
         return defaultProperties;
     }
 }

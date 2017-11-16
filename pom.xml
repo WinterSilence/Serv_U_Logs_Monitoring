@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>myProject</groupId>
     <artifactId>WorkProject</artifactId>
-    <version>20171019</version>
+    <version>20171116</version>
     <dependencies>
         <dependency>
             <groupId>commons-net</groupId>
@@ -102,6 +102,8 @@
                                 <resource>
                                     <directory>src/main/resources</directory>
                                     <include>default.properties</include>
+                                    <include>banned/bannedLogins.txt</include>
+                                    <include>banned/bannedFolders.txt</include>
                                     <include>template.xhtml</include>
                                     <filtering>true</filtering>
                                 </resource>
