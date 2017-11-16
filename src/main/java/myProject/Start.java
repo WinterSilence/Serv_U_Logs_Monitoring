@@ -1,6 +1,7 @@
 package myProject;
 
 import javafx.application.Application;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import myProject.controller.FXMLController;
 import myProject.model.MyModel;
@@ -16,6 +17,7 @@ public class Start extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
+        stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon/WorkProject.png")));
         MyModel myModel = new MyModel();
         WindowView windowView = new WindowView(myModel);
         FXMLController fxmlController = new FXMLController(myModel);

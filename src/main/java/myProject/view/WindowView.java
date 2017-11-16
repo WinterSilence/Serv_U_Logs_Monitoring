@@ -46,6 +46,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.Pair;
@@ -109,6 +110,7 @@ public class WindowView implements View {
     private Button FTPButton;
     private Button todayButton;
     private Button yesterdayButton;
+    private Button folderViewButton;
 
     private Label startButtonText;
     private Label todayButtonText;
@@ -167,6 +169,7 @@ public class WindowView implements View {
         setLeftStatusLabel();
         setTodayButton();
         setYesterdayButton();
+        setFolderViewButton();
         setTodayButtonText();
         setYesterdayButtonText();
         setSearchTextField();
@@ -192,6 +195,8 @@ public class WindowView implements View {
         FTPButton = (Button) anchorPaneRecently.lookup("#FTPbutton");
         todayButton = (Button) anchorPaneRecently.lookup("#todayButton");
         yesterdayButton = (Button) anchorPaneRecently.lookup("#yesterdayButton");
+        folderViewButton = (Button) anchorPaneRecently.lookup("#folderViewButton");
+
         searchTextField = (TextField) anchorPaneRecently.lookup("#searchTextField");
 
         recentlyTaskChoiceBox = (ChoiceBox<String>) splitPane.lookup("#recentlyTaskChoiceBox");
@@ -446,6 +451,27 @@ public class WindowView implements View {
             FTPButton.setDisable(true);
             todayButton.setDisable(true);
             yesterdayButton.setDisable(true);
+        });
+    }
+
+    private void setFolderViewButton(){
+        folderViewButton.setOnAction(event -> {
+            try {
+                Node child = FXMLLoader.load(getClass().getClassLoader().getResource("FolderView.fxml"));
+                Dialog dialog = new Dialog();
+                Window window = dialog.getDialogPane().getScene().getWindow();
+                window.setOnCloseRequest(event1 -> window.hide());
+
+                dialog.setHeight(child.getScaleY());
+                dialog.setWidth(child.getScaleY());
+
+//                ButtonType loginButtonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+//                dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+                dialog.setGraphic(child);
+                dialog.show();
+            } catch (IOException e){
+                Helper.log(e);
+            }
         });
     }
 
