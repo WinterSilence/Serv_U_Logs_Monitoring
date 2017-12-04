@@ -42,10 +42,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.scene.web.WebView;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
+import javafx.stage.*;
 import javafx.stage.Window;
 import javafx.util.Callback;
 import javafx.util.Duration;
@@ -447,22 +444,17 @@ public class WindowView implements View {
         });
     }
 
-    private void setFolderViewButton(){
-        folderViewButton.setOnAction(event -> {
+    private void setFolderViewButton() {
+        folderViewButton.setOnAction((ActionEvent event) -> {
             try {
-                Node child = FXMLLoader.load(getClass().getClassLoader().getResource("FolderView.fxml"));
                 Dialog dialog = new Dialog();
                 Window window = dialog.getDialogPane().getScene().getWindow();
-                window.setOnCloseRequest(event1 -> window.hide());
-
-                dialog.setHeight(child.getScaleY());
-                dialog.setWidth(child.getScaleY());
-
-//                ButtonType loginButtonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
-//                dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
-                dialog.setGraphic(child);
+                window.setOnCloseRequest(event1 -> dialog.hide());
+                FolderWindow folderWindow = new FolderWindow();
+                Node folderWindowNode = folderWindow.getFolderWindowNode();
+                dialog.getDialogPane().setContent(folderWindowNode);
                 dialog.show();
-            } catch (IOException e){
+            } catch (IOException e) {
                 Helper.log(e);
             }
         });
@@ -1274,7 +1266,7 @@ public class WindowView implements View {
         }
     }
 
-    private void fireOpenFolder(String absolutePath) throws IOException{
+    private void fireOpenFolder(String absolutePath) throws IOException {
         if (System.getProperty("os.name").startsWith("Windows")) {
             Runtime.getRuntime().exec("explorer.exe "
                     + Helper.renameFolder(absolutePath));

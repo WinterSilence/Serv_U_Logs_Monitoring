@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ChoiceBox?>
@@ -20,7 +27,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="VBox" prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:id="VBox" prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
   <children>
     <MenuBar fx:id="menuBar" VBox.vgrow="NEVER">
       <menus>
@@ -176,7 +183,7 @@
                   <Button fx:id="stopButton" disable="true" layoutX="116.0" layoutY="22.0" mnemonicParsing="false" text="СТОП" />
                   <Button fx:id="checkHoursButton" layoutX="162.0" layoutY="22.0" mnemonicParsing="false" text="Часы" />
                   <TextField fx:id="searchTextField" layoutX="318.0" layoutY="22.0" prefHeight="25.0" prefWidth="76.0" promptText="Поиск" />
-                  <Button fx:id="folderViewButton" layoutX="397.0" layoutY="23.0" mnemonicParsing="false" text="FolderView" visible="false" />
+                  <Button fx:id="folderViewButton" layoutX="397.0" layoutY="23.0" mnemonicParsing="false" text="FolderView" />
           </children>
         </AnchorPane>
       </items>
