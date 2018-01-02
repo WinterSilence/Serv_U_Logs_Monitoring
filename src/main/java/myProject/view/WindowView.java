@@ -389,8 +389,6 @@ public class WindowView implements View {
 
     private void setStartButton() {
         startButton.setOnAction(event -> {
-            createCurrentDateFolder(defaultProperties.getString("pc1Folder"));
-            createCurrentDateFolder(defaultProperties.getString("pc2Folder"));
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
@@ -1140,64 +1138,60 @@ public class WindowView implements View {
 
         inQuantel.setOnAction(event1 -> {
             File folderTo = new File(defaultProperties.getString("quantelFolder"));
-            fireCopyFiles(folderTo, "Quantel", true);
+            startCopyFiles(folderTo, "Quantel", true);
         });
 
         inDalet.setOnAction(event1 -> {
             File folderTo = new File(defaultProperties.getString("rikrzFolder"));
-            fireCopyFiles(folderTo, "Dalet основной", true);
+            startCopyFiles(folderTo, "Dalet основной", true);
         });
 
         inDaletFFAStrans.setOnAction(event1 -> {
             File folderTo = new File(defaultProperties.getString("ffastransFolder"));
-            fireCopyFiles(folderTo, "Dalet FFAStrans", true);
+            startCopyFiles(folderTo, "Dalet FFAStrans", true);
         });
 
         inDaletReserv.setOnAction(event1 -> {
             File folderTo = new File(defaultProperties.getString("rezervDaletFolder"));
-            fireCopyFiles(folderTo, "Dalet Резерв", true);
+            startCopyFiles(folderTo, "Dalet Резерв", true);
         });
 
         inAirManager.setOnAction(event1 -> {
             File folderTo = new File(defaultProperties.getString("airManagerFolder"));
-            fireCopyFiles(folderTo, "Air-manager", true);
+            startCopyFiles(folderTo, "Air-manager", true);
         });
 
 
         quantelNaPryamkiPC1.setOnAction(event1 -> {
             String PC1Address = defaultProperties.getString("pc1Folder");
-            String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
-            File currDateFolder = new File(PC1Address + currDateFolderPath);
-            File folderTo = new File(currDateFolder.getAbsolutePath());
-            fireCopyFiles(folderTo, "PC1", false);
+            createCurrentDateFolder(PC1Address);
+            startCopyFiles(folderToFile(PC1Address), "PC1", false);
         });
 
         quantelNaPryamkiPC2.setOnAction(event1 -> {
             String PC2Address = defaultProperties.getString("pc2Folder");
-            String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
-            File currDateFolder = new File(PC2Address + currDateFolderPath);
-            File folderTo = new File(currDateFolder.getAbsolutePath());
-            fireCopyFiles(folderTo, "PC2", false);
+            createCurrentDateFolder(PC2Address);
+            startCopyFiles(folderToFile(PC2Address), "PC2", false);
         });
 
         copyToEMG.setOnAction(event1 -> {
             File folderTo = new File(defaultProperties.getString("emgFolder"));
-            fireCopyFiles(folderTo, "EMG", false);
+            startCopyFiles(folderTo, "EMG", false);
         });
 
         copyToCulture.setOnAction(event1 -> {
             File folderTo = new File(defaultProperties.getString("cultureFolder"));
-            fireCopyFiles(folderTo, "Культуру", true);
+            startCopyFiles(folderTo, "Культуру", true);
         });
 
         copyToDezhchast.setOnAction(event1 -> {
             File folderTo = new File(defaultProperties.getString("dezhChastFolder"));
-            fireCopyFiles(folderTo, "ДЧ", false);
+            startCopyFiles(folderTo, "ДЧ", false);
         });
 
         copyToObmenUtro.setOnAction(event1 -> {
             File folderTo = new File(defaultProperties.getString("obmenUtroFolder"));
-            fireCopyFiles(folderTo, "ДУР", false);
+            startCopyFiles(folderTo, "ДУР", false);
         });
 
         soundToQuantel.setOnAction(event -> {
@@ -1236,7 +1230,7 @@ public class WindowView implements View {
                 directoryChooser.setInitialDirectory(initialDirectory);
                 File folderTo = directoryChooser.showDialog(stage);
                 if (folderTo != null) {
-                    fireCopyFiles(folderTo, folderTo.getName(), false);
+                    startCopyFiles(folderTo, folderTo.getName(), false);
                 }
             } else {
                 try {
@@ -1257,6 +1251,12 @@ public class WindowView implements View {
             }
         });
         row.setContextMenu(contextMenu);
+    }
+
+    private File folderToFile(String PCAddress) {
+        createCurrentDateFolder(defaultProperties.getString("pc2Folder"));
+        String currDateFolderPath = new SimpleDateFormat("dd-MM-yy").format(new Date()) + "\\";
+        return new File(PCAddress + currDateFolderPath);
     }
 
     private void fireOpenFileFolderWithFocus(String absolutePath) throws IOException {
@@ -1410,7 +1410,7 @@ public class WindowView implements View {
         });
     }
 
-    private void fireCopyFiles(File folderTo, String text, boolean rename) {
+    private void startCopyFiles(File folderTo, String text, boolean rename) {
         List<Task> selected = new ArrayList<>();
         for (Task task : tableViewRecently.getItems()) {
             if (task.checkboxProperty().get()) {
