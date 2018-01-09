@@ -102,7 +102,7 @@ public class Helper {
 
     public static void log(Throwable throwable) {
         throwable.printStackTrace();
-        writeLog(throwable.toString() + " - " + new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date()));
+        writeStringToLog(throwable.toString());
     }
 
     public static void pause(long seconds) {
@@ -156,11 +156,11 @@ public class Helper {
         }
     }
 
-    public static void writeLog(String string) {
+    public static void writeStringToLog(String string) {
         try {
             File file = new File(folder + File.separator + "log.txt");
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, true));
-            bufferedWriter.write(string + "\r\n");
+            bufferedWriter.write(new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date()) + " - " + string + "\r\n");
             bufferedWriter.close();
         } catch (IOException ex) {
         }

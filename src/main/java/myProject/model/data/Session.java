@@ -15,6 +15,7 @@ public class Session {
     private Date connectionTime;
     private List<Task> tasks;
     private String client = "";
+    private Set<String> logins = new HashSet<>();
 
     private String data;
 
@@ -23,6 +24,10 @@ public class Session {
         this.tasks = new ArrayList<>();
         this.data = data;
         init();
+    }
+
+    public Set<String> getLogins() {
+        return logins;
     }
 
     private void init() {
@@ -46,6 +51,9 @@ public class Session {
                     login = Helper.EMPTY_LOGIN_FIELD;
                 }
             }
+        }
+        if (!login.equals(Helper.EMPTY_LOGIN_FIELD)) {
+            logins.add(login);
         }
 
         if (data.contains(") Connected to ")) {

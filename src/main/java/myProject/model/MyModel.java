@@ -41,7 +41,7 @@ public class MyModel {
             bannedLoginsFile = new File("src/main/resources/banned/bannedLogins.txt");
         }
         try (BufferedReader buf = new BufferedReader(new FileReader(bannedLoginsFile))) {
-            while (buf.ready()){
+            while (buf.ready()) {
                 bannedLogins.add(buf.readLine());
             }
         } catch (IOException ex) {
@@ -53,7 +53,7 @@ public class MyModel {
             bannedFoldersFile = new File("src/main/resources/banned/bannedFolders.txt");
         }
         try (BufferedReader buf = new BufferedReader(new FileReader(bannedFoldersFile))) {
-            while (buf.ready()){
+            while (buf.ready()) {
                 bannedFolders.add(buf.readLine());
             }
         } catch (IOException ex) {
@@ -113,26 +113,7 @@ public class MyModel {
         openedFile.initTodayDataMap(mainFolderFile);
 
         Iterator<Map.Entry<String, StringBuilder>> iterator = openedFile.getInitDataMap().entrySet().iterator();
-        while (iterator.hasNext()) {
-
-            Map.Entry<String, StringBuilder> pair = iterator.next();
-            String key = pair.getKey();                                      // ID Session
-            StringBuilder value = pair.getValue();                           // Data может быть неполной (не сначала)
-
-            Session session = new Session(key, value.toString());
-
-            if (session.isOffline() && session.isEmpty()) {
-                iterator.remove();
-                continue;
-            }
-            w.lock();
-            try {
-                allSessionsMap.put(key, session);
-            } finally {
-                w.unlock();
-            }
-        }
-        tasksUpdate();
+        iterateData(iterator);
     }
 
     public void initDefault() {
@@ -142,26 +123,7 @@ public class MyModel {
         openedFile.initAnyDateDataMap(mainFolderFile, Helper.yesterday());
 
         Iterator<Map.Entry<String, StringBuilder>> iterator = openedFile.getInitDataMap().entrySet().iterator();
-        while (iterator.hasNext()) {
-
-            Map.Entry<String, StringBuilder> pair = iterator.next();
-            String key = pair.getKey();                                      // ID Session
-            StringBuilder value = pair.getValue();                           // Data может быть неполной (не сначала)
-
-            Session session = new Session(key, value.toString());
-
-            if (session.isOffline() && session.isEmpty()) {
-                iterator.remove();
-                continue;
-            }
-            w.lock();
-            try {
-                allSessionsMap.put(key, session);
-            } finally {
-                w.unlock();
-            }
-        }
-        tasksUpdate();
+        iterateData(iterator);
     }
 
     // Init with any date
@@ -176,6 +138,10 @@ public class MyModel {
         }
 
         Iterator<Map.Entry<String, StringBuilder>> iterator = openedFile.getInitDataMap().entrySet().iterator();
+        iterateData(iterator);
+    }
+
+    private void iterateData(Iterator<Map.Entry<String, StringBuilder>> iterator) {
         while (iterator.hasNext()) {
 
             Map.Entry<String, StringBuilder> pair = iterator.next();
@@ -360,6 +326,9 @@ public class MyModel {
                     } finally {
                         w.unlock();
                     }
+                }
+                if (pair.getValue().getLogins().size() > 1) {
+                    Helper.writeStringToLog("Несколько логинов за одну сессию!!!!!!!! Номер сессии - " + pair.getKey());
                 }
             }
         } finally {
