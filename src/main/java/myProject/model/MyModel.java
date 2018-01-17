@@ -328,7 +328,7 @@ public class MyModel {
                     }
                 }
                 if (pair.getValue().getLogins().size() > 1) {
-                    Helper.writeStringToLog("Несколько логинов за одну сессию!!!!!!!! Номер сессии - " + pair.getKey());
+                    Helper.writeStringToLog("Несколько логинов за одну сессию!!!!!!!! Номер сессии - " + pair.getKey()); //todo test!!!
                 }
             }
         } finally {
