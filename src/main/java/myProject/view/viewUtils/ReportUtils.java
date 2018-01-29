@@ -119,7 +119,6 @@ public class ReportUtils {
         String lastnames = getLastnames();
         writeInfoToFile(lastnames);
 
-        System.out.println(getCountOfFiles("\\\\FTPRES\\upload\\"));
         writeInfoToFile("Общее количество файлов - " +
                 Integer.toString(getCountOfFiles("\\\\FTPRES\\upload\\")));
         writeInfoToFile("Carbon - " +

@@ -176,7 +176,6 @@ public class FtpSourceImpl implements FileSource {
 
     private void makingCopy(File fileFromFTP, String filename) throws IOException {
         Helper.print("File " + filename + " has been downloaded successfully.");
-        System.out.println(fileFromFTP.getName());
         Helper.print("Making copy!");
         File fileCopy = createLocalFile(filename);
         fileCopy.deleteOnExit();

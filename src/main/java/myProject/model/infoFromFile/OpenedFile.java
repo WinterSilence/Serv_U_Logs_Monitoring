@@ -9,7 +9,7 @@ import java.nio.charset.Charset;
 
 public class OpenedFile {
 
-    private Map<String, StringBuilder> initDataMap;
+    private Map<String, StringBuilder> initDataMap = new HashMap<>();
     private Map<String, StringBuilder> newUpdateMap = new HashMap<>();
 
     private String todayFileFullPath = "";

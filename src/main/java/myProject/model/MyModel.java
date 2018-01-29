@@ -280,9 +280,6 @@ public class MyModel {
                             task.setState(UploadState.ERROR_UPLOAD);
                         }
                     }
-                    if (task.getLogin().equals(Helper.EMPTY_LOGIN_FIELD)) {
-                        checkTaskUnknownLogin(task);
-                    }
                     if (task.getState().equals(UploadState.END_UPLOAD)) {
                         w.lock();
                         try {
@@ -304,14 +301,31 @@ public class MyModel {
         } finally {
             r.unlock();
         }
+        checkTaskUnknownLogin(uncompletedTasks);
+        checkTaskUnknownLogin(completedTasks);
     }
 
-    private void checkTaskUnknownLogin(Task task) {
-        String taskFolder = task.getFolder().toLowerCase();
-        String taskFilename = task.getFilename().toLowerCase();
-        if (taskFolder.endsWith("upload_inet")) task.setLogin("Reporter");
-        else if (taskFilename.contains("spb")) task.setLogin("Spb");
-        else if (taskFilename.contains("rostovdon")) task.setLogin("Rostovdon");
+    private void checkTaskUnknownLogin(List<Task> tasks) {
+        for (Task task : tasks) {
+            if (task.getLogin().equals(Helper.EMPTY_LOGIN_FIELD)) {
+                String taskFolder = task.getFolder().toLowerCase();
+                String taskFilename = task.getFilename().toLowerCase();
+                if (taskFolder.endsWith("upload_inet")) task.setLogin("Reporter");
+                else if (taskFilename.contains("spb")) task.setLogin("Spb");
+                else if (taskFilename.contains("rostovdon")) task.setLogin("Rostovdon");
+                for (Task uploadingTask : uploadingTasks) {
+                    if (task.getFullname().equals(uploadingTask.getFullname())
+                            && (task.getState().equals(UploadState.END_UPLOAD) || task.getState().equals(UploadState.ERROR_UPLOAD))) {
+                        task.setLogin(uploadingTask.getLogin());
+                        uploadingTask.setState(task.getState());
+                        uploadingTask.setSpeed(task.getSpeed());
+                        uploadingTask.setTimeEnd(task.getTimeEnd());
+                        uploadingTask.setUnitFile(task.getUnitFile());
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     public Map<String, Session> getOnlineSessionsMap() {

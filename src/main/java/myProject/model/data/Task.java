@@ -13,9 +13,6 @@ import java.util.Locale;
 
 public class Task {
 
-//   Alternate date implementation
-//    private UnitFile unitFile;
-
     private UploadState state = UploadState.NOT_START;
     private Date timeStart;
     private Date timeEnd;
@@ -137,5 +134,21 @@ public class Task {
 
     public String getIDSession() {
         return IDSession;
+    }
+
+    public void setUnitFile(UnitFile unitFile) {
+        this.unitFile.set(unitFile);
+    }
+
+    public void setSpeed(String speed) {
+        this.speed = speed;
+    }
+
+    public void setTimeStart(Date timeStart) {
+        this.timeStart = timeStart;
+    }
+
+    public void setTimeEnd(Date timeEnd) {
+        this.timeEnd = timeEnd;
     }
 }
