@@ -127,6 +127,7 @@ public class MyModel {
     }
 
     // Init with any date
+/*
     public void init(Date... dates) {
         reset();
 
@@ -136,6 +137,17 @@ public class MyModel {
         for (Date date : dates) {
             openedFile.initAnyDateDataMap(mainFolderFile, date);
         }
+
+        Iterator<Map.Entry<String, StringBuilder>> iterator = openedFile.getInitDataMap().entrySet().iterator();
+        iterateData(iterator);
+    }
+*/
+
+    public void init(File file) {
+        reset();
+
+        openedFile.resetInitMap();
+        openedFile.initDataMapByFile(file);
 
         Iterator<Map.Entry<String, StringBuilder>> iterator = openedFile.getInitDataMap().entrySet().iterator();
         iterateData(iterator);
@@ -268,7 +280,7 @@ public class MyModel {
                                 if (new Date().getTime() - fileTask.lastModified() < 8 * 60 * 60000) {
                                     uploadingTasks.add(task);
                                 } else {
-                                    System.err.println("Время последнего изменения сессиии большле восьми часов = " +
+                                    System.err.println("Время последнего изменения сессиии больше восьми часов = " +
                                             (new Date().getTime() - fileTask.lastModified()) / (60 * 60000));
                                     task.setState(UploadState.END_UPLOAD);
                                 }
@@ -350,6 +362,27 @@ public class MyModel {
         }
         return result;
     }
+
+    public Session getSessionById(String id) {
+        Session result = null;
+        r.lock();
+        try {
+            for (Map.Entry<String, Session> pair : allSessionsMap.entrySet()) {
+                w.lock();
+                try {
+                    if (pair.getKey().equals(id)){
+                        return pair.getValue();
+                    }
+                } finally {
+                    w.unlock();
+                }
+            }
+        } finally {
+            r.unlock();
+        }
+        return null;
+    }
+
 
     private void reset() {
         w.lock();

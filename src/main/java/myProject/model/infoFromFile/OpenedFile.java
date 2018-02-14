@@ -53,7 +53,16 @@ public class OpenedFile {
         }
     }
 
-    public void resetInitMap(){
+    public void initDataMapByFile(File file) {
+        try {
+            initMapByDate(file);
+            System.out.println();
+        } catch (IOException ex) {
+            Helper.log(ex);
+        }
+    }
+
+    public void resetInitMap() {
         initDataMap = new HashMap<>();
     }
 

@@ -8,6 +8,7 @@ import myProject.model.MyModel;
 import myProject.model.infoFromFile.FileSource;
 import myProject.view.WindowView;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
@@ -117,6 +118,7 @@ public class FXMLController implements Controller {
         updateThread.start();
     }
 
+/*
     public void establishConnection(FileSource fileSource, Date... dates) {
         Thread updateThread = new Thread(new Runnable() {
             @Override
@@ -126,7 +128,23 @@ public class FXMLController implements Controller {
 //                offline.set(false);
                 myModel.init(dates);
                 view.update();
-//                setOfflineProperty();
+                Helper.print("Disconnected");
+            }
+        });
+        updateThread.setDaemon(true);
+        updateThread.start();
+    }
+*/
+
+    public void establishConnectionOpenFile(File file){
+        Thread updateThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Helper.print("Establish connection");
+//                myModel.setFileSource(fileSource);
+//                offline.set(false);
+                myModel.init(file);
+                view.update();
                 Helper.print("Disconnected");
             }
         });

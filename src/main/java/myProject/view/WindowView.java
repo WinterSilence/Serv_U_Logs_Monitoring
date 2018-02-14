@@ -35,6 +35,8 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -79,6 +81,7 @@ public class WindowView implements View {
 
     private final int FILE_MENU = 0;
     private final int TOOLS_MENU = 2;
+    private final int ABOUT_MENU = 3;
 
     private final int OPEN_MENUITEM = 0;
     private final int EXIT_MENUITEM = 7;
@@ -134,6 +137,8 @@ public class WindowView implements View {
     private int checkHours;
     private boolean isDay;
 
+    private boolean openFile = false;
+
     private Stage stage;
 
     private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM");
@@ -164,7 +169,7 @@ public class WindowView implements View {
         setHideShowSessionTable();
         setLeftStatusLabel();
         setTodayButton();
-        setYesterdayButton();
+//        setYesterdayButton();
         setFolderViewButton();
         setTodayButtonText();
         setYesterdayButtonText();
@@ -225,6 +230,7 @@ public class WindowView implements View {
         initUploadingFiles();
         initRecentlyUploadedFiles();
         initReportMenu();
+        initAbout();
     }
 
     private void setDayNightButton() {
@@ -371,18 +377,32 @@ public class WindowView implements View {
     private void setOpenMenuButton(Stage stage) {
         MenuBar menuBar = (MenuBar) root.lookup("#menuBar");              // Menu Bar
         Menu menuFile = menuBar.getMenus().get(FILE_MENU);                        // File Menu
-        MenuItem openButton = menuFile.getItems().get(OPEN_MENUITEM);               // Open Button
+        MenuItem openButton = menuFile.getItems().get(OPEN_MENUITEM);             // Open Button
         openButton.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
-            fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-            File file = fileChooser.showOpenDialog(stage);
+            String openFolder = properties.getString("openFolder");
+            if (openFolder != null && !openFolder.equals("")) {
+                fileChooser.setInitialDirectory(new File(openFolder));
+            } else {
+                fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+                System.out.println("asdasd");
+                properties.addProperty("openFolder", System.getProperty("user.dir"));
+                try {
+                    properties.save();
+                } catch (ConfigurationException ignore) {
+                }
+            }
 
+            File file = fileChooser.showOpenDialog(stage);
             if (file != null) {
-                fileChooser.setInitialDirectory(file.getParentFile());
                 stage.setTitle(title + " - " + file.getName());
-                fxmlController.setTodayFullPath(file.getAbsolutePath());
-                //TODO !!!
-//                myModel.reset();
+                properties.setProperty("openFolder", file.getParentFile().getAbsolutePath());
+                try {
+                    properties.save();
+                } catch (ConfigurationException ignore) {
+                }
+                openFile = true;
+                fxmlController.establishConnectionOpenFile(file);
             }
         });
     }
@@ -392,6 +412,7 @@ public class WindowView implements View {
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
+                    openFile = false;
                     fxmlController.establishConnection(FileSourceFactory.createShareSource());
                 }
             });
@@ -432,6 +453,7 @@ public class WindowView implements View {
         });
     }
 
+/*
     private void setYesterdayButton() {
         yesterdayButton.setOnAction(event -> {
             fxmlController.establishConnection(FileSourceFactory.createShareSource(), Helper.yesterday());
@@ -441,6 +463,7 @@ public class WindowView implements View {
             yesterdayButton.setDisable(true);
         });
     }
+*/
 
     private void setFolderViewButton() {
         folderViewButton.setOnAction((ActionEvent event) -> {
@@ -591,15 +614,18 @@ public class WindowView implements View {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                setTableViewOnline();
+
+                if (!openFile) {
+                    setTableViewOnline();
+
+                    setTableViewUploading();
+
+                    currentDate.set(simpleDateFormat.format(new Date()));
+
+                    yesterdayDate.set(simpleDateFormat.format(Helper.yesterday()));
+                }
 
                 setTableViewRecently();
-
-                setTableViewUploading();
-
-                currentDate.set(simpleDateFormat.format(new Date()));
-
-                yesterdayDate.set(simpleDateFormat.format(Helper.yesterday()));
             }
         });
     }
@@ -764,7 +790,7 @@ public class WindowView implements View {
             } else {
                 currTime = currentDate.getTime() - task.getTimeStart().getTime();
             }
-            if (currTime < checkHours * 3_600_000L) {
+            if (currTime < checkHours * 3_600_000L || openFile) {
                 result.add(task);
             }
         }
@@ -1135,6 +1161,20 @@ public class WindowView implements View {
             });
         }
         contextMenu.getItems().addAll(copyToUploadFolder, openFolder);
+
+        MenuItem whoIs = new MenuItem("WHOIS");
+        whoIs.setOnAction(event -> {
+            try {
+                Runtime.getRuntime().exec(
+                        "cmd.exe /c start /max https://www.google.com/search?q="
+                                + "who+is+"
+                                + myModel.getSessionById(task.getIDSession()).getIPAddress());
+
+            } catch (IOException ex) {
+                Helper.log(ex);
+            }
+        });
+        contextMenu.getItems().add(whoIs);
 
         inQuantel.setOnAction(event1 -> {
             File folderTo = new File(defaultProperties.getString("quantelFolder"));
@@ -1541,6 +1581,37 @@ public class WindowView implements View {
                     Helper.log(ex);
                 }
             }
+        });
+    }
+
+    private void initAbout() {
+        MenuBar menuBar = (MenuBar) root.lookup("#menuBar");                    // Menu Bar
+        Menu aboutMenu = menuBar.getMenus().get(ABOUT_MENU);                            // About Menu
+        MenuItem aboutMenuItem = aboutMenu.getItems().get(REPORT_MENUITEM);             // About
+        aboutMenuItem.setOnAction(event -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            StringBuilder header = new StringBuilder();
+            header.append("                            SMENA OGS HELPER\r\n");
+            header.append("                              ULTIMATE 2018.1.0\r\n");
+            alert.setHeaderText(header.toString());
+            Image image = new Image(getClass().getResourceAsStream("/icon/WorkProject.png"));
+            alert.setGraphic(new ImageView(image));
+            alert.getGraphic().setScaleX(0.5);
+            alert.getGraphic().setScaleY(0.5);
+            alert.getGraphic().setOnMouseEntered(event1 -> {
+                alert.getGraphic().setScaleX(1);
+                alert.getGraphic().setScaleY(1);
+            });
+            alert.getGraphic().setOnMouseExited(event1 -> {
+                alert.getGraphic().setScaleX(0.5);
+                alert.getGraphic().setScaleY(0.5);
+            });
+            StringBuilder contentText = new StringBuilder();
+            contentText.append("                                           Build 20180214.1, on January 02, 2018\r\n");
+            contentText.append("© 2016-2018, Created by Alexander Merezhin, All rights reserved.\r\n");
+            alert.setContentText(contentText.toString());
+            alert.initModality(Modality.NONE);
+            alert.showAndWait();
         });
     }
 
